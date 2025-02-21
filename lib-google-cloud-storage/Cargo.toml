@@ -1,0 +1,8 @@
+[package]
+name = "lib-google-cloud-storage"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+google-cloud-storage = "0.24.0"
+tracing = "0.1.40"
