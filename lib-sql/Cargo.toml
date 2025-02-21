@@ -1,0 +1,26 @@
+[package]
+name = "lib-sql"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+sqlx = { version = "0.8.3", default-features = false, features = [
+    "postgres",
+    "runtime-tokio-native-tls",
+    "uuid",
+    "chrono",
+    "macros",
+    "migrate",
+] }
+secrecy = "0.10.3"
+
+
+[lints.rust]
+unsafe_code = "forbid"  # Disallow unsafe code
+missing_docs = "warn"   # Warn if public items lack documentation
+
+[lints.clippy]
+pedantic = "warn"       # Enable Clippy’s strictest rules
+unwrap_used = "deny"    # Disallow `unwrap()`
