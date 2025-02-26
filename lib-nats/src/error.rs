@@ -2,7 +2,9 @@ use std::env::VarError;
 
 use async_nats::{
     jetstream::{
-        consumer::pull::BatchErrorKind, context::GetStreamErrorKind, stream::ConsumerErrorKind,
+        consumer::pull::BatchErrorKind,
+        context::{CreateKeyValueErrorKind, GetStreamErrorKind},
+        stream::ConsumerErrorKind,
     },
     ConnectErrorKind,
 };
@@ -41,6 +43,12 @@ impl From<async_nats::error::Error<async_nats::jetstream::context::CreateStreamE
         value: async_nats::error::Error<async_nats::jetstream::context::CreateStreamErrorKind>,
     ) -> Self {
         Self::StreamError(value.to_string())
+    }
+}
+
+impl From<async_nats::error::Error<CreateKeyValueErrorKind>> for Error {
+    fn from(value: async_nats::error::Error<CreateKeyValueErrorKind>) -> Self {
+        Self::ConfigError(value.to_string())
     }
 }
 
