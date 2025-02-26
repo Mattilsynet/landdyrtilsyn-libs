@@ -3,6 +3,7 @@ use std::env;
 use google_cloud_storage::{
     client::{google_cloud_auth::credentials::CredentialsFile, Client, ClientConfig},
     http::objects::{download::Range, get::GetObjectRequest},
+    http::objects::upload::{Media, UploadObjectRequest, UploadType},
 };
 
 #[derive(Clone)]
@@ -55,5 +56,20 @@ impl GcsClient {
                 None
             }
         }
+    }
+
+    pub async fn upload_file(&self, path: &str, content: Vec<u8>) {
+        let upload_type = UploadType::Simple(Media::new(path.to_string()));
+        let _uploaded = self
+            .client
+            .upload_object(
+                &UploadObjectRequest {
+                    bucket: self.bucket.clone(),
+                    ..Default::default()
+                },
+                content,
+                &upload_type,
+            )
+            .await;
     }
 }
