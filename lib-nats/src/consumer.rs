@@ -27,6 +27,35 @@ pub async fn get_or_create_durable_consumer(
     Ok(consumer)
 }
 
+pub async fn get_or_create_stream_and_consumer(
+    context: &Context,
+    stream_name: &str,
+    subjects: Vec<String>,
+    durable_name: &str,
+    num_replicas: usize,
+    consumer_subject: &str,
+) -> Result<consumer::PullConsumer> {
+    let consumer: consumer::PullConsumer = context
+        .get_or_create_stream(stream::Config {
+            name: stream_name.to_string(),
+            subjects,
+            num_replicas,
+            ..Default::default()
+        })
+        .await?
+        .get_or_create_consumer(
+            "pull",
+            consumer::pull::Config {
+                durable_name: Some(durable_name.to_string()),
+                ack_policy: consumer::AckPolicy::Explicit,
+                filter_subject: consumer_subject.to_string(),
+                ..Default::default()
+            },
+        )
+        .await?;
+    Ok(consumer)
+}
+
 pub async fn get_or_create_workque_stream(
     context: &Context,
     stream_name: &str,
