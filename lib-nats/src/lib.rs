@@ -4,5 +4,6 @@ pub mod error;
 
 pub use async_nats::jetstream::consumer::PullConsumer;
 pub use async_nats::jetstream::AckKind;
-pub use async_nats::jetstream::Context;
 pub use async_nats::HeaderMap;
+pub use async_nats::jetstream;
+pub use async_nats::jetstream::{stream, Context};
