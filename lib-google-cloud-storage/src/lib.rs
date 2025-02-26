@@ -2,8 +2,8 @@ use std::env;
 
 use google_cloud_storage::{
     client::{google_cloud_auth::credentials::CredentialsFile, Client, ClientConfig},
-    http::objects::{download::Range, get::GetObjectRequest},
     http::objects::upload::{Media, UploadObjectRequest, UploadType},
+    http::objects::{download::Range, get::GetObjectRequest},
 };
 
 #[derive(Clone)]
