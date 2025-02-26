@@ -124,6 +124,23 @@ pub async fn get_consumer_from_stream(
     Ok(consumer)
 }
 
+pub async fn get_or_create_stream(
+    context: &Context,
+    stream_name: &str,
+    subjects: Vec<String>,
+    num_replicas: usize,
+) -> Result<()> {
+    context
+        .get_or_create_stream(stream::Config {
+            name: stream_name.to_string(),
+            subjects,
+            num_replicas,
+            ..Default::default()
+        })
+        .await?;
+    Ok(())
+}
+
 pub async fn get_last_message_from_subject(
     jetstream: &Context,
     subject: String,
