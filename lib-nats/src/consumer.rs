@@ -1,9 +1,9 @@
-use std::time::Duration;
 use crate::error::{Error, Result};
 use async_nats::jetstream::consumer::PullConsumer;
 use async_nats::jetstream::stream::{self, Source, Stream};
 use async_nats::jetstream::{consumer, Context, Message};
 use futures::TryStreamExt;
+use std::time::Duration;
 
 pub async fn get_or_create_durable_consumer(
     context: &Context,
@@ -301,7 +301,6 @@ pub async fn get_all_messages_from_bm_stream_subject(
     }
     Ok(all_messages)
 }
-
 
 pub async fn create_kv_bucket(
     jetstream: &Context,
