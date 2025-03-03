@@ -1,0 +1,8 @@
+
+# Audit config file for GitHub Actions
+
+[advisories]
+ignore = ["RUSTSEC-2023-0071"] # advisory IDs to ignore
+informational_warnings = ["unmaintained"] # warn for categories of informational advisories
+severity_threshold = "low" # CVSS severity ("none", "low", "medium", "high", "critical")
+
