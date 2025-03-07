@@ -8,3 +8,4 @@ pub use async_nats::jetstream::AckKind;
 pub use async_nats::jetstream::{stream, Context};
 pub use async_nats::Client;
 pub use async_nats::HeaderMap;
+pub use async_nats::Message;
