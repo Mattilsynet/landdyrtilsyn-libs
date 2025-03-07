@@ -84,8 +84,8 @@ impl From<async_nats::error::Error<BatchErrorKind>> for Error {
     }
 }
 
-impl From<async_nats::client::PublishErrorKind> for Error {
-    fn from(value: async_nats::client::PublishErrorKind) -> Self {
+impl From<async_nats::error::Error<async_nats::client::PublishErrorKind>> for Error {
+    fn from(value: async_nats::error::Error<async_nats::client::PublishErrorKind>) -> Self {
         Self::PublishError(value.to_string())
     }
 }
