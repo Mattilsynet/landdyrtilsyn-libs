@@ -19,6 +19,7 @@ pub enum Error {
     StreamError(String),
     FetchError(String),
     NotFoundError(String),
+    PublishError(String),
 }
 
 impl std::fmt::Display for Error {
@@ -30,6 +31,7 @@ impl std::fmt::Display for Error {
             Error::StreamError(e) => write!(f, "Failed to get NATS stream: {}", e),
             Error::FetchError(e) => write!(f, "Failed to fetch message from NATS: {}", e),
             Error::NotFoundError(e) => write!(f, "Message not found {}", e),
+            Error::PublishError(e) => write!(f, "Failed to publish: {}", e),
         }
     }
 }
@@ -79,5 +81,11 @@ impl From<async_nats::error::Error<GetStreamErrorKind>> for Error {
 impl From<async_nats::error::Error<BatchErrorKind>> for Error {
     fn from(value: async_nats::error::Error<BatchErrorKind>) -> Self {
         Self::FetchError(value.to_string())
+    }
+}
+
+impl From<async_nats::client::PublishErrorKind> for Error {
+    fn from(value: async_nats::client::PublishErrorKind) -> Self {
+        Self::PublishError(value.to_string())
     }
 }
