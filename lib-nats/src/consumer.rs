@@ -135,6 +135,11 @@ pub async fn get_or_create_bm_sourced_stream(context: &Context) -> Result<Stream
                     filter_subject: Some("bekymringsmeldinger.publikum.v1.>".to_string()),
                     ..Default::default()
                 },
+                Source {
+                    name: "bekymringsmeldinger_rodtkjott".to_string(),
+                    filter_subject: Some("bekymringsmeldinger.rodtkjott.v2.>".to_string()),
+                    ..Default::default()
+                },
             ]
             .into(),
             ..Default::default()
