@@ -5,4 +5,4 @@ edition = "2021"
 
 [dependencies]
 google-cloud-storage = "0.24.0"
-tracing = "0.1.40"
+tracing = "0.1.41"
