@@ -13,9 +13,10 @@ thiserror = "2.0.12"
 
 bon = {version = "3.5.1",optional = true}
 tracing = "0.1.41"
+chrono = "0.4.40"
 
 [features]
 orgenhet = ["dep:bon"]
-
+bilde = ["dep:bon"]
 default = []
 

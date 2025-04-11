@@ -2,7 +2,6 @@ use super::response::{Ansatt, Avdeling, Region};
 use crate::client::ApiClient;
 use crate::error::ApiError;
 use crate::{error::Result, orgenhet::response::Orgenhet};
-use reqwest::Response;
 use serde::Deserialize;
 use tracing::{error, info};
 
@@ -59,7 +58,7 @@ impl OrgEnhetClient {
 
         info!("Henter alle ansatte fra: {:?}", url);
 
-        let response = self.api_get(&url).await?;
+        let response = self.api_client.api_get(&url).await?;
 
         if response.status().is_success() {
             // let json: serde_json::Value = response.json().await.unwrap();
@@ -93,31 +92,12 @@ impl OrgEnhetClient {
         }
     }
 
-    async fn api_get(&self, url: &String) -> Result<Response> {
-        let response = self
-            .api_client
-            .get_client()
-            .get(url)
-            .header(
-                reqwest::header::CONTENT_TYPE.to_string(),
-                "application/json",
-            )
-            .bearer_auth(self.api_client.get_token())
-            .send()
-            .await
-            .map_err(|e| ApiError::ClientError {
-                resource: "reqwest".to_string(),
-                error_message: e.to_string(),
-            })?;
-        Ok(response)
-    }
-
     pub async fn hent_ansatt_med_brukernavn(&self, brukernavn: String) -> Result<Ansatt> {
         let url = format!("{}ansatte/{}", &self.api_client.get_base_url(), brukernavn);
 
         info!("Henter ansatt med brukernavn fra: {:?}", url);
 
-        let response = self.api_get(&url).await?;
+        let response = self.api_client.api_get(&url).await?;
 
         if response.status().is_success() {
             // let json: serde_json::Value = response.json().await.unwrap();
@@ -153,21 +133,7 @@ impl OrgEnhetClient {
 
         info!("Henter ansatte fra: {:?}", url);
 
-        let response = self
-            .api_client
-            .get_client()
-            .get(&url)
-            .header(
-                reqwest::header::CONTENT_TYPE.to_string(),
-                "application/json",
-            )
-            .bearer_auth(self.api_client.get_token())
-            .send()
-            .await
-            .map_err(|e| ApiError::ClientError {
-                resource: "reqwest".to_string(),
-                error_message: e.to_string(),
-            })?;
+        let response = self.api_client.api_get(&url).await?;
 
         if response.status().is_success() {
             let ansatt_response: AnsatteResponse = response
@@ -211,7 +177,7 @@ impl OrgEnhetClient {
 
         info!("Henter org_enhet fra: {:?}", url);
 
-        let response = self.api_get(&url).await?;
+        let response = self.api_client.api_get(&url).await?;
 
         if response.status().is_success() {
             let orgenhet: Orgenhet = response
@@ -245,7 +211,7 @@ impl OrgEnhetClient {
 
         info!("Henter regioner fra: {:?}", url);
 
-        let response = self.api_get(&url).await?;
+        let response = self.api_client.api_get(&url).await?;
 
         if response.status().is_success() {
             let region_response: RegionResponse = response
@@ -280,7 +246,7 @@ impl OrgEnhetClient {
 
         info!("Henter avdelinger fra: {:?}", url);
 
-        let response = self.api_get(&url).await?;
+        let response = self.api_client.api_get(&url).await?;
 
         if response.status().is_success() {
             let avdeling_response: AvdelingResponse = response

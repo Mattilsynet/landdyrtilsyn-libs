@@ -1,6 +1,7 @@
 use crate::auth::get_keycloak_token;
 use crate::config::ClientConfiguration;
 use crate::error::ApiError;
+use reqwest::Response;
 use reqwest_middleware::reqwest::Client;
 use reqwest_middleware::{ClientBuilder as MiddlewareClientBuilder, ClientWithMiddleware};
 use reqwest_retry::{RetryTransientMiddleware, policies::ExponentialBackoff};
@@ -58,5 +59,23 @@ impl ApiClient {
             .with(RetryTransientMiddleware::new_with_policy(retry_policy))
             .build();
         self
+    }
+
+    pub async fn api_get(&self, url: &String) -> crate::error::Result<Response> {
+        let response = self
+            .get_client()
+            .get(url)
+            .header(
+                reqwest::header::CONTENT_TYPE.to_string(),
+                "application/json",
+            )
+            .bearer_auth(self.get_token())
+            .send()
+            .await
+            .map_err(|e| ApiError::ClientError {
+                resource: "reqwest".to_string(),
+                error_message: e.to_string(),
+            })?;
+        Ok(response)
     }
 }
