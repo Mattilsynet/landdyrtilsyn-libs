@@ -1,0 +1,21 @@
+[package]
+name = "lib-clients"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+reqwest = { version = "0.12.15", features = ["json", "rustls-tls"]}
+reqwest-retry = "0.7.0"
+reqwest-middleware = { version = "0.4.1", features = ["json", "rustls-tls"] }
+serde = { version = "1.0.219", features = ["derive"] }
+secrecy = "0.10.3"
+thiserror = "2.0.12"
+
+bon = {version = "3.5.1",optional = true}
+tracing = "0.1.41"
+
+[features]
+orgenhet = ["dep:bon"]
+
+default = []
+
