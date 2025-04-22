@@ -1,10 +1,10 @@
 use crate::arkiv::response::{ArkivClientJournalpost, ArkivClientSak};
-use crate::error::{Result};
-use crate::error::ApiError;
 use crate::client::ApiClient;
+use crate::error::ApiError;
+use crate::error::Result;
 use serde::Deserialize;
 use tracing::{error, info};
-use uuid::{Uuid};
+use uuid::Uuid;
 
 pub struct ArkivClient {
     api_client: ApiClient,
@@ -55,7 +55,7 @@ impl ArkivClient {
         if response.status().is_success() {
             let text = response.text().await.unwrap();
             let sak: ArkivClientSak =
-                serde_json::from_str(&text).map_err(|e|ApiError::ParseError(e.to_string()))?;
+                serde_json::from_str(&text).map_err(|e| ApiError::ParseError(e.to_string()))?;
             info!("Hentet sak {:?} fra arkiv api.", sak);
             Ok(sak)
         } else {
@@ -104,8 +104,8 @@ impl ArkivClient {
 
         if response.status().is_success() {
             let text = response.text().await?;
-            let journalposter_response: JournalposterResponse = serde_json::from_str(&text)
-                .map_err(|e| ApiError::ParseError(e.to_string()))?;
+            let journalposter_response: JournalposterResponse =
+                serde_json::from_str(&text).map_err(|e| ApiError::ParseError(e.to_string()))?;
             let journalposter = journalposter_response.embedded.journalpost_list;
             info!(
                 "Hentet journalposter på sak {:?} fra arkiv api.",
