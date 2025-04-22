@@ -13,10 +13,13 @@ thiserror = "2.0.12"
 
 bon = {version = "3.5.1",optional = true}
 tracing = "0.1.41"
-chrono = "0.4.40"
+chrono = { version = "0.4.40", features = ["serde"] }
+serde_json = "1.0.140"
+uuid = { version = "1.16.0", features = ["v4"] }
 
 [features]
 orgenhet = ["dep:bon"]
 bilde = ["dep:bon"]
+arkiv = ["dep:bon"]
 default = []
 
