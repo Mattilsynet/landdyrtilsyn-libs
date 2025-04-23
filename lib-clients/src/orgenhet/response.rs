@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Clone, PartialEq, Eq)]
 pub struct Ansatt {
@@ -31,6 +31,28 @@ pub struct Orgenhet {
     #[serde(alias = "orgunittype")]
     pub org_unit_type: Option<String>,
     pub children: Option<Vec<Orgenhet>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum Type {
+    Region,
+    Avdeling,
+    Seksjon,
+    Annen,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all(deserialize = "camelCase", serialize = "camelCase"))]
+pub struct Kontor {
+    id: String,
+    pub kortnavn: String,
+    pub navn: String,
+    #[serde(rename(serialize = "type", deserialize = "type"))]
+    kontor_type: Type,
+    seksjon_id: Option<String>,
+    avdeling_id: Option<String>,
+    region_id: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone, PartialEq, Eq)]

@@ -17,4 +17,6 @@ pub enum ApiError {
         resource: String,
         error_message: String,
     },
+    #[error("Validation Error error in {0}")]
+    ValidationError(String),
 }

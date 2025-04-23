@@ -1,9 +1,11 @@
-use super::response::{Ansatt, Avdeling, Region};
+use super::response::{Ansatt, Avdeling, Kontor, Region};
 use crate::client::ApiClient;
 use crate::error::ApiError;
 use crate::{error::Result, orgenhet::response::Orgenhet};
+use reqwest::header::{ACCEPT, HeaderMap, HeaderValue};
 use serde::Deserialize;
-use tracing::{error, info};
+use tracing::{error, info, instrument};
+use uuid::Uuid;
 
 pub struct OrgEnhetClient {
     api_client: ApiClient,
@@ -46,6 +48,7 @@ struct AvdelingEmbedded {
 }
 
 impl OrgEnhetClient {
+    #[instrument(name = "Creating OrgenhetClient")]
     pub async fn new() -> Self {
         OrgEnhetClient {
             api_client: ApiClient::new("ORG_ENHET", "KEYCLOAK_ORGENHET").await,
@@ -274,5 +277,44 @@ impl OrgEnhetClient {
                 ),
             })
         }
+    }
+
+    #[instrument(
+        name = "Fetching kontor by orgenhet_id",
+        skip(self),
+        fields(
+            request_id = %Uuid::new_v4(),
+            orgenhet_id = %orgenhet_id
+        )
+    )]
+    pub async fn hent_kontor_med_id(&self, orgenhet_id: &str) -> Result<Kontor> {
+        let mut headers = HeaderMap::new();
+        headers.insert(ACCEPT, HeaderValue::from_static("application/json"));
+
+        let url = format!(
+            "{}/kontorer/{}",
+            self.api_client.get_base_url(),
+            orgenhet_id,
+        );
+
+        let response = self.api_client.api_get(&url).await?;
+        let status = response.status();
+        let response_text = response.text().await.map_err(|e| ApiError::ClientError {
+            resource: "reqwest".to_string(),
+            error_message: e.to_string(),
+        })?;
+
+        if !status.is_success() {
+            return Err(ApiError::ClientError {
+                resource: "org_enhet".to_string(),
+                error_message: format!(
+                    "Failed to get kontor, HTTP Status: {}, response {}",
+                    status, response_text
+                ),
+            });
+        }
+
+        let orgenhet_response: Kontor = serde_json::from_str(&response_text).unwrap();
+        Ok(orgenhet_response)
     }
 }

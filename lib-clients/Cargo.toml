@@ -21,5 +21,7 @@ uuid = { version = "1.16.0", features = ["v4"] }
 orgenhet = ["dep:bon"]
 bilde = ["dep:bon"]
 arkiv = ["dep:bon"]
+kodeverk = ["dep:bon"]
+dokument_generator = ["dep:bon"]
 default = []
 
