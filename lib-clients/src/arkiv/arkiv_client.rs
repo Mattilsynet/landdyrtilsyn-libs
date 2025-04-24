@@ -51,7 +51,7 @@ impl ArkivClient {
         noarksaksnummer: &str,
     ) -> Result<ArkivClientSak> {
         let url = format!(
-            "{}arkiv/saker/{}/{}",
+            "{}/arkiv/saker/{}/{}",
             self.api_client.get_base_url(),
             noarkaar,
             noarksaksnummer
@@ -101,7 +101,7 @@ impl ArkivClient {
         noarksaksnummer: &str,
     ) -> Result<Vec<ArkivClientJournalpost>> {
         let url = format!(
-            "{}arkiv/saker/{}/{}/journalposter",
+            "{}/arkiv/saker/{}/{}/journalposter",
             self.api_client.get_base_url(),
             noarkaar,
             noarksaksnummer

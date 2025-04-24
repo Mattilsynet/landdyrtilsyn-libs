@@ -21,7 +21,7 @@ impl BildeClient {
         storrelse: String,
     ) -> Result<(Vec<u8>, String)> {
         let url = format!(
-            "{}kategorier/bilder/{}/{}?filter.app=MAKKS",
+            "{}/kategorier/bilder/{}/{}?filter.app=MAKKS",
             &self.api_client.get_base_url(),
             bilde_id,
             storrelse,

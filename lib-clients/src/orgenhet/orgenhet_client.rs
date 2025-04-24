@@ -60,7 +60,7 @@ impl OrgEnhetClient {
 
     //https://tilsynskvittering.inspektor-utv.mattilsynet.io/api/orgenhet-api/ansatte?page.size=10000&page.number=0
     pub async fn hent_alle_ansatte(&self) -> Result<Vec<Ansatt>> {
-        let url = format!("{}ansatte", &self.api_client.get_base_url(),);
+        let url = format!("{}/ansatte", &self.api_client.get_base_url(),);
 
         info!("Henter alle ansatte fra: {:?}", url);
 
@@ -99,7 +99,7 @@ impl OrgEnhetClient {
     }
 
     pub async fn hent_ansatt_med_brukernavn(&self, brukernavn: String) -> Result<Ansatt> {
-        let url = format!("{}ansatte/{}", &self.api_client.get_base_url(), brukernavn);
+        let url = format!("{}/ansatte/{}", &self.api_client.get_base_url(), brukernavn);
 
         info!("Henter ansatt med brukernavn fra: {:?}", url);
 
@@ -132,7 +132,7 @@ impl OrgEnhetClient {
     }
     pub async fn hent_ansatte_i_avdeling(&self, avdeling_id: String) -> Result<Vec<Ansatt>> {
         let url = format!(
-            "{}kontorer/{}/ansatte",
+            "{}/kontorer/{}/ansatte",
             &self.api_client.get_base_url(),
             avdeling_id
         );
@@ -175,7 +175,7 @@ impl OrgEnhetClient {
         id: &str,
     ) -> Result<Orgenhet> {
         let url = format!(
-            "{}orgenheter/parenttype/{}/id/{}",
+            "{}/orgenheter/parenttype/{}/id/{}",
             &self.api_client.get_base_url(),
             orgenhet_type,
             id
