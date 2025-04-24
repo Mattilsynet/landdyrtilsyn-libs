@@ -12,12 +12,13 @@ pub struct KodeverkClient {
 
 impl KodeverkClient {
     #[instrument(name = "Creating KodeverkClient")]
-    pub async fn new(base_url_prefix: &str, auth_config_prefix: &str) -> Self {
-        let client = ApiClient::new(base_url_prefix, auth_config_prefix)
-            .await
-            .clone();
+    pub async fn new(base_url_prefix: Option<&str>, auth_config_prefix: Option<&str>) -> Self {
+        let base = base_url_prefix.unwrap_or("KODEVERK");
+        let auth = auth_config_prefix.unwrap_or("KEYCLOAK");
 
-        KodeverkClient { api_client: client }
+        KodeverkClient {
+            api_client: ApiClient::new(base, auth).await,
+        }
     }
 
     #[instrument(

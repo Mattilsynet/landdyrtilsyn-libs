@@ -12,9 +12,12 @@ pub struct DokumentGeneratorClient {
 
 impl DokumentGeneratorClient {
     #[instrument(name = "Creating DokumentGeneratorClient")]
-    pub async fn new(base_url_prefix: &str, auth_config_prefix: &str) -> Self {
+    pub async fn new(base_url_prefix: Option<&str>, auth_config_prefix: Option<&str>) -> Self {
+        let base = base_url_prefix.unwrap_or("DOKUMENT_GENERATOR");
+        let auth = auth_config_prefix.unwrap_or("KEYCLOAK");
+
         DokumentGeneratorClient {
-            api_client: ApiClient::new(base_url_prefix, auth_config_prefix).await,
+            api_client: ApiClient::new(base, auth).await,
         }
     }
 

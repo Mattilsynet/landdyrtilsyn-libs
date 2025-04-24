@@ -49,9 +49,12 @@ struct AvdelingEmbedded {
 
 impl OrgEnhetClient {
     #[instrument(name = "Creating OrgenhetClient")]
-    pub async fn new() -> Self {
+    pub async fn new(base_url_prefix: Option<&str>, auth_config_prefix: Option<&str>) -> Self {
+        let base = base_url_prefix.unwrap_or("ORG_ENHET");
+        let auth = auth_config_prefix.unwrap_or("KEYCLOAK_ORGENHET");
+
         OrgEnhetClient {
-            api_client: ApiClient::new("ORG_ENHET", "KEYCLOAK_ORGENHET").await,
+            api_client: ApiClient::new(base, auth).await,
         }
     }
 
