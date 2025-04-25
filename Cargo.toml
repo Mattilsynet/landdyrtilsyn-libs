@@ -1,7 +1,7 @@
 [package]
 name = "landdyrtilsyn-libs"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [workspace]
 members = ["lib-keycloak-client", "lib-auth", "lib-google-cloud-storage", "lib-sql", "lib-nats", "lib-clients"]
