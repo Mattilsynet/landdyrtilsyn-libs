@@ -1,4 +1,4 @@
-use super::response::{Ansatt, Avdeling, Kontor, Region};
+use super::response::{Ansatt, Avdeling, Kontor, Region, Seksjon};
 use crate::client::ApiClient;
 use crate::error::ApiError;
 use crate::{error::Result, orgenhet::response::Orgenhet};
@@ -45,6 +45,18 @@ struct AvdelingResponse {
 struct AvdelingEmbedded {
     #[serde(rename = "avdelingList")]
     avdeling_list: Vec<Avdeling>,
+}
+
+#[derive(Deserialize)]
+struct SeksjonResponse {
+    #[serde(rename = "_embedded")]
+    embedded: SeksjonEmbedded,
+}
+
+#[derive(Deserialize)]
+struct SeksjonEmbedded {
+    #[serde(rename = "seksjonList")]
+    seksjonlist: Vec<Seksjon>,
 }
 
 impl OrgEnhetClient {
@@ -276,6 +288,41 @@ impl OrgEnhetClient {
                 resource: "org_enhet".to_string(),
                 error_message: format!(
                     "Failed to fetch avdelinger. HTTP Status: {}, response: {}",
+                    status, error_message
+                ),
+            })
+        }
+    }
+
+    pub async fn hent_seksjoner(&self) -> Result<Vec<Seksjon>> {
+        let url = format!("{}/seksjoner", &self.api_client.get_base_url(),);
+
+        info!("Henter seksjoner fra: {:?}", url);
+
+        let response = self.api_client.api_get(&url).await?;
+
+        if response.status().is_success() {
+            let seksjon_response: SeksjonResponse = response
+                .json()
+                .await
+                .map_err(|e| ApiError::ParseError(e.to_string()))?;
+            let seksjoner = seksjon_response.embedded.seksjonlist;
+            info!("Hentet {} seksjoner fra org_enhet api.", seksjoner.len());
+            Ok(seksjoner)
+        } else {
+            let status = response.status();
+            let error_message = response
+                .text()
+                .await
+                .unwrap_or_else(|_| "Unknown error".to_string());
+            error!(
+                "Klarte ikke hente regioner. error code {}, error message {}",
+                status, error_message
+            );
+            Err(ApiError::ClientError {
+                resource: "org_enhet".to_string(),
+                error_message: format!(
+                    "Failed to fetch regioner. HTTP Status: {}, response: {}",
                     status, error_message
                 ),
             })

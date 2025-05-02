@@ -68,3 +68,10 @@ pub struct Avdeling {
     pub kortnavn: String,
     pub navn: String,
 }
+
+#[derive(Debug, Deserialize, Clone, PartialEq, Eq)]
+pub struct Seksjon {
+    pub id: String,
+    pub kortnavn: String,
+    pub navn: String,
+}
