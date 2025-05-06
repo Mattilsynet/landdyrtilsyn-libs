@@ -1,8 +1,9 @@
 use crate::client::ApiClient;
 use crate::error::ApiError;
 use crate::error::Result;
-use crate::kodeverk::response::KodeverkResponse;
+use crate::kodeverk::response::{Code, KodeverkResponse};
 use reqwest_middleware::reqwest::header::{ACCEPT, HeaderMap, HeaderValue};
+use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
 
@@ -97,4 +98,54 @@ impl KodeverkClient {
 
         Ok(related_code_list_string)
     }
+
+    pub async fn get_code(&self, code_type: &str, params: &CodeParams) -> Result<String> {
+        let url = format!(
+            "{}/kodeverk/code/{}",
+            self.api_client.get_base_url(),
+            code_type
+        );
+
+        let response = self.api_client.api_get(&url).await?;
+
+        let status = response.status();
+        let response_text = response.text().await.map_err(|e| ApiError::ClientError {
+            resource: "reqwest".to_string(),
+            error_message: e.to_string(),
+        })?;
+        if !status.is_success() {
+            return Err(ApiError::ClientError {
+                resource: "org_enhet".to_string(),
+                error_message: format!(
+                    "Failed to get kodeverk relation, HTTP Status: {}, response {}",
+                    status, response_text
+                ),
+            });
+        }
+        //println!("response_text : {}", response_text);
+
+        let kodeverk_response: Code = serde_json::from_str(&response_text)
+            .map_err(|e| ApiError::ParseError(e.to_string()))?;
+
+        // println!(
+        //     "kodeverk_response : {:?}",
+        //     kodeverk_response
+        // );
+
+        let code = serde_json::to_string_pretty(&kodeverk_response).map_err(|e| {
+            ApiError::ClientError {
+                resource: "serde".to_string(),
+                error_message: e.to_string(),
+            }
+        })?;
+
+        Ok(code)
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CodeParams {
+    pub root_code: Option<String>,
+    pub filter: Option<String>,
+    pub include_inactive: Option<bool>,
 }

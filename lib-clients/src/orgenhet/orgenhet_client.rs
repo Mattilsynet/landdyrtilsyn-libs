@@ -142,6 +142,47 @@ impl OrgEnhetClient {
             })?
         }
     }
+
+    pub async fn hent_ansatte_i_seksjon(&self, seksjon_id: String) -> Result<Vec<Ansatt>> {
+        let url = format!(
+            "{}/seksjoner/{}/ansatte",
+            &self.api_client.get_base_url(),
+            seksjon_id
+        );
+
+        info!("Henter ansatte fra: {:?}", url);
+
+        let response = self.api_client.api_get(&url).await?;
+
+        if response.status().is_success() {
+            let ansatt_response: AnsatteResponse = response
+                .json()
+                .await
+                .map_err(|e| ApiError::ParseError(e.to_string()))?;
+            let ansatte = ansatt_response.embedded.ansatt_list;
+            info!("Hentet {} ansatte fra org_enhet api.", ansatte.len());
+            Ok(ansatte)
+        } else {
+            let status = response.status();
+            let error_message = response
+                .text()
+                .await
+                .unwrap_or_else(|_| "Unknown error".to_string());
+            error!(
+                "Klarte ikke hente ansatte. seksjon_id {}, error code {}, error message {}",
+                seksjon_id, status, error_message
+            );
+            Err(ApiError::ClientError {
+                resource: "org_enhet".to_string(),
+                error_message: format!(
+                    "Failed to fetch ansatte i seksjon. HTTP Status: {}, response: {}",
+                    status, error_message
+                ),
+            })
+            .into()
+        }
+    }
+
     pub async fn hent_ansatte_i_avdeling(&self, avdeling_id: String) -> Result<Vec<Ansatt>> {
         let url = format!(
             "{}/kontorer/{}/ansatte",
@@ -181,6 +222,7 @@ impl OrgEnhetClient {
             .into()
         }
     }
+
     pub async fn hent_overordnet_orgenhet(
         &self,
         orgenhet_type: String,

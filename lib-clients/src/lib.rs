@@ -10,7 +10,8 @@ pub mod orgenhet;
 
 #[cfg(feature = "kodeverk")]
 pub use kodeverk::{
-    kodeverk_client::KodeverkClient, response::KodeverkResponse, response::RelatedCode,
+    kodeverk_client::CodeParams, kodeverk_client::KodeverkClient, response::Code,
+    response::KodeverkResponse, response::RelatedCode,
 };
 
 #[cfg(feature = "dokument_generator")]
