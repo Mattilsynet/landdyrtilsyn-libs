@@ -98,13 +98,28 @@ impl KodeverkClient {
 
         Ok(related_code_list_string)
     }
-
     pub async fn get_code(&self, code_type: &str, params: &CodeParams) -> Result<String> {
-        let url = format!(
+        let mut url = format!(
             "{}/kodeverk/code/{}",
             self.api_client.get_base_url(),
             code_type
         );
+
+        let mut query_parts = vec![];
+        if let Some(root_code) = &params.root_code {
+            query_parts.push(format!("rootCode={}", root_code));
+        }
+        if let Some(filter) = &params.filter {
+            query_parts.push(format!("filter={}", filter));
+        }
+        if let Some(include_inactive) = params.include_inactive {
+            query_parts.push(format!("includeInactive={}", include_inactive));
+        }
+
+        if !query_parts.is_empty() {
+            url.push('?');
+            url.push_str(&query_parts.join("&"));
+        }
 
         let response = self.api_client.api_get(&url).await?;
 
@@ -122,15 +137,9 @@ impl KodeverkClient {
                 ),
             });
         }
-        //println!("response_text : {}", response_text);
 
         let kodeverk_response: Code = serde_json::from_str(&response_text)
             .map_err(|e| ApiError::ParseError(e.to_string()))?;
-
-        // println!(
-        //     "kodeverk_response : {:?}",
-        //     kodeverk_response
-        // );
 
         let code = serde_json::to_string_pretty(&kodeverk_response).map_err(|e| {
             ApiError::ClientError {
