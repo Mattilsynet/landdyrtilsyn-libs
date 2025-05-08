@@ -24,5 +24,6 @@ arkiv = ["dep:bon"]
 kodeverk = ["dep:bon"]
 dokument_generator = ["dep:bon"]
 virksomhet = ["dep:bon"]
+tilsynskvittering = ["dep:bon"]
 default = []
 

@@ -7,6 +7,7 @@ pub mod document_generator;
 pub mod error;
 pub mod kodeverk;
 pub mod orgenhet;
+pub mod tilsynskvittering;
 pub mod virksomhet;
 
 #[cfg(feature = "kodeverk")]
@@ -34,5 +35,10 @@ pub use arkiv::{
 
 #[cfg(feature = "virksomhet")]
 pub use virksomhet::{
-    virksomhet_client::VirksomhetClient, response::Virksomhet, respone::Underenhet,
+    respone::Underenhet, response::Virksomhet, virksomhet_client::VirksomhetClient,
+};
+
+#[cfg(feature = "tilsynskvittering")]
+pub use tilsynskvittering::{
+    response::TilsynsobjektKvittering, tilsynskvittering_client::TilsynskvitteringClient,
 };
