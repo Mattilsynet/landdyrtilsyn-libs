@@ -33,4 +33,6 @@ pub use arkiv::{
 };
 
 #[cfg(feature = "virksomhet")]
-pub use virksomhet::{};
+pub use virksomhet::{
+    virksomhet_client::VirksomhetClient, response::Virksomhet, respone::Underenhet,
+};
