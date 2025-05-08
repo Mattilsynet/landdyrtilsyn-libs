@@ -23,5 +23,6 @@ bilde = ["dep:bon"]
 arkiv = ["dep:bon"]
 kodeverk = ["dep:bon"]
 dokument_generator = ["dep:bon"]
+virksomhet = ["dep:bon"]
 default = []
 

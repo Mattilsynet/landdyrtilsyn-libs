@@ -7,6 +7,7 @@ pub mod document_generator;
 pub mod error;
 pub mod kodeverk;
 pub mod orgenhet;
+pub mod virksomhet;
 
 #[cfg(feature = "kodeverk")]
 pub use kodeverk::{
@@ -30,3 +31,6 @@ pub use bilde::{bilde_client::BildeClient, response::ImageMetaData};
 pub use arkiv::{
     arkiv_client::ArkivClient, response::ArkivClientJournalpost, response::ArkivClientSak,
 };
+
+#[cfg(feature = "virksomhet")]
+pub use virksomhet::{};
