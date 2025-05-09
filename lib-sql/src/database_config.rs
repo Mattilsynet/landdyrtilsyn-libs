@@ -1,8 +1,8 @@
 use secrecy::ExposeSecret;
 use secrecy::SecretString;
 use sqlx::{
-    postgres::{PgConnectOptions, PgPoolOptions},
     Pool, Postgres,
+    postgres::{PgConnectOptions, PgPoolOptions},
 };
 use std::env;
 

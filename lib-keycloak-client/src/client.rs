@@ -3,7 +3,7 @@ use crate::config::ClientConfiguration;
 use crate::error::ApiError;
 use reqwest_middleware::reqwest::Client;
 use reqwest_middleware::{ClientBuilder as MiddlewareClientBuilder, ClientWithMiddleware};
-use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
+use reqwest_retry::{RetryTransientMiddleware, policies::ExponentialBackoff};
 use secrecy::ExposeSecret;
 use std::env;
 

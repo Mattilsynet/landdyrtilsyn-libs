@@ -1,7 +1,7 @@
 use crate::error::{Error, Result};
 use async_nats::jetstream::consumer::PullConsumer;
 use async_nats::jetstream::stream::{self, Source, Stream};
-use async_nats::jetstream::{consumer, Context, Message};
+use async_nats::jetstream::{Context, Message, consumer};
 use futures::TryStreamExt;
 use std::time::Duration;
 

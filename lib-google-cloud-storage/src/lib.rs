@@ -1,7 +1,7 @@
 use std::env;
 
 use google_cloud_storage::{
-    client::{google_cloud_auth::credentials::CredentialsFile, Client, ClientConfig},
+    client::{Client, ClientConfig, google_cloud_auth::credentials::CredentialsFile},
     http::objects::upload::{Media, UploadObjectRequest, UploadType},
     http::objects::{download::Range, get::GetObjectRequest},
 };

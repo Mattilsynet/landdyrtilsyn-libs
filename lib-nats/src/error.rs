@@ -1,12 +1,12 @@
 use std::env::VarError;
 
 use async_nats::{
+    ConnectErrorKind,
     jetstream::{
         consumer::pull::BatchErrorKind,
         context::{CreateKeyValueErrorKind, GetStreamErrorKind},
         stream::ConsumerErrorKind,
     },
-    ConnectErrorKind,
 };
 
 pub type Result<T> = core::result::Result<T, Error>;
