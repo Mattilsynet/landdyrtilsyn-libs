@@ -10,6 +10,7 @@ pub struct Ansatt {
     pub kontor_id: Option<String>,
     #[serde(rename(deserialize = "kontorNavn"))]
     pub kontor_navn: Option<String>,
+    #[serde(rename(deserialize = "seksjonId"))]
     pub seksjon_id: Option<String>,
     #[serde(rename(deserialize = "avdelingId"))]
     pub avdeling_id: Option<String>,

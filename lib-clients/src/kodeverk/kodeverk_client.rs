@@ -98,7 +98,7 @@ impl KodeverkClient {
 
         Ok(related_code_list_string)
     }
-    pub async fn get_code(&self, code_type: &str, params: &CodeParams) -> Result<String> {
+    pub async fn get_code(&self, code_type: &str, params: &CodeParams) -> Result<Code> {
         let mut url = format!(
             "{}/kodeverk/code/{}",
             self.api_client.get_base_url(),
@@ -141,14 +141,7 @@ impl KodeverkClient {
         let kodeverk_response: Code = serde_json::from_str(&response_text)
             .map_err(|e| ApiError::ParseError(e.to_string()))?;
 
-        let code = serde_json::to_string_pretty(&kodeverk_response).map_err(|e| {
-            ApiError::ClientError {
-                resource: "serde".to_string(),
-                error_message: e.to_string(),
-            }
-        })?;
-
-        Ok(code)
+        Ok(kodeverk_response)
     }
 }
 
