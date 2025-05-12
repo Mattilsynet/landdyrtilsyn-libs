@@ -76,7 +76,7 @@ impl BildeClient {
         Ok(bilder)
     }
 
-    pub async fn hent_bilde_rodtkjottkjott(
+    pub async fn hent_bilde_rodtkjott(
         &self,
         bilde_id: String,
         storrelse: String,
