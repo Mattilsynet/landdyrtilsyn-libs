@@ -19,12 +19,14 @@ impl BildeClient {
         &self,
         bilde_id: String,
         storrelse: String,
+        filter: String,
     ) -> Result<(Vec<u8>, String)> {
         let url = format!(
-            "{}/kategorier/bilder/{}/{}?filter.app=MAKKS",
+            "{}/kategorier/bilder/{}/{}?filter.app={}",
             &self.api_client.get_base_url(),
             bilde_id,
             storrelse,
+            filter,
         );
         info!("Henter bilde fra: {:?}", url);
         let response = self.api_client.api_get(&url).await?;
@@ -63,11 +65,38 @@ impl BildeClient {
         }
     }
 
-    pub async fn hent_bilde_metadata(&self, bilde_id: String) -> Result<ImageMetaData> {
+    pub async fn hent_bilde_hvittkjott(
+        &self,
+        bilde_id: String,
+        storrelse: String,
+    ) -> Result<(Vec<u8>, String)> {
+        let bilder = self
+            .hent_bilde(bilde_id, storrelse, "MAKKS_HK".to_string())
+            .await?;
+        Ok(bilder)
+    }
+
+    pub async fn hent_bilde_rodtkjottkjott(
+        &self,
+        bilde_id: String,
+        storrelse: String,
+    ) -> Result<(Vec<u8>, String)> {
+        let bilder = self
+            .hent_bilde(bilde_id, storrelse, "MAKKS".to_string())
+            .await?;
+        Ok(bilder)
+    }
+
+    pub async fn hent_bilde_metadata(
+        &self,
+        bilde_id: String,
+        filter: String,
+    ) -> Result<ImageMetaData> {
         let url = format!(
-            "{}/kategorier/bilder/{}?filter.app=MAKKS",
+            "{}/kategorier/bilder/{}?filter.app={}",
             &self.api_client.get_base_url(),
             bilde_id,
+            filter,
         );
         info!("Henter bilde metadata fra: {:?}", url);
         let response = self.api_client.api_get(&url).await?;
@@ -97,5 +126,19 @@ impl BildeClient {
                 ),
             })
         }
+    }
+
+    pub async fn hent_bilde_metadata_rodtkjott(&self, bilde_id: String) -> Result<ImageMetaData> {
+        let bilde_meta_data = self
+            .hent_bilde_metadata(bilde_id, "MAKKS".to_string())
+            .await?;
+        Ok(bilde_meta_data)
+    }
+
+    pub async fn hent_bilde_metadata_hvittkjott(&self, bilde_id: String) -> Result<ImageMetaData> {
+        let bilde_meta_data = self
+            .hent_bilde_metadata(bilde_id, "MAKKS_HK".to_string())
+            .await?;
+        Ok(bilde_meta_data)
     }
 }
