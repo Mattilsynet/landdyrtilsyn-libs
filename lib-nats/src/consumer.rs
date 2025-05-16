@@ -2,7 +2,7 @@ use crate::error::{Error, Result};
 use async_nats::jetstream::consumer::PullConsumer;
 use async_nats::jetstream::stream::{self, Source, Stream};
 use async_nats::jetstream::{Context, Message, consumer};
-use futures::TryStreamExt;
+use futures::{StreamExt, TryStreamExt};
 use std::time::Duration;
 
 pub async fn get_or_create_durable_consumer(
@@ -300,7 +300,8 @@ pub async fn get_all_messages_from_bm_stream_subject(
         let mut messages = consumer
             .messages()
             .await
-            .map_err(|err| Error::StreamError(err.to_string()))?;
+            .map_err(|err| Error::StreamError(err.to_string()))?
+            .take(100);
 
         let mut found_messages = false;
 
