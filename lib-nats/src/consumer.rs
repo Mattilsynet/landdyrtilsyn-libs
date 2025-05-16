@@ -244,7 +244,10 @@ pub async fn get_all_messages_from_subject(
             .await?;
 
     loop {
-        let mut messages = consumer.messages().await.map_err(|err| Error::StreamError(err.to_string()))?;
+        let mut messages = consumer
+            .messages()
+            .await
+            .map_err(|err| Error::StreamError(err.to_string()))?;
 
         let mut found_messages = false;
 
@@ -268,7 +271,10 @@ pub async fn get_last_message_from_subject(
         create_ephemeral_consumer_last_per_subject(jetstream, "bekymringsmeldinger_all", subject)
             .await?;
 
-    let mut messages = consumer.messages().await.map_err(|err| Error::StreamError(err.to_string()))?;
+    let mut messages = consumer
+        .messages()
+        .await
+        .map_err(|err| Error::StreamError(err.to_string()))?;
 
     if let Ok(Some(message)) = messages
         .try_next()
@@ -291,7 +297,10 @@ pub async fn get_all_messages_from_bm_stream_subject(
             .await?;
 
     loop {
-        let mut messages = consumer.messages().await.map_err(|err| Error::StreamError(err.to_string()))?;
+        let mut messages = consumer
+            .messages()
+            .await
+            .map_err(|err| Error::StreamError(err.to_string()))?;
 
         let mut found_messages = false;
 
