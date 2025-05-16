@@ -245,6 +245,8 @@ pub async fn get_all_messages_from_subject(
 
     loop {
         let mut messages = consumer
+            .fetch()
+            .max_messages(100)
             .messages()
             .await
             .map_err(|err| Error::StreamError(err.to_string()))?;
@@ -272,6 +274,8 @@ pub async fn get_last_message_from_subject(
             .await?;
 
     let mut messages = consumer
+        .fetch()
+        .max_messages(1)
         .messages()
         .await
         .map_err(|err| Error::StreamError(err.to_string()))?;
@@ -298,6 +302,8 @@ pub async fn get_all_messages_from_bm_stream_subject(
 
     loop {
         let mut messages = consumer
+            .fetch()
+            .max_messages(100)
             .messages()
             .await
             .map_err(|err| Error::StreamError(err.to_string()))?
