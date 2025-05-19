@@ -16,6 +16,8 @@ pub struct Ansatt {
     pub avdeling_id: Option<String>,
     #[serde(rename(deserialize = "regionId"))]
     pub region_id: Option<String>,
+    #[serde(rename(deserialize = "orgenhetId"))]
+    pub orgenhet_id: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone, PartialEq, Eq)]
