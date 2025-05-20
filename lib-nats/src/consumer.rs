@@ -270,6 +270,36 @@ pub async fn get_all_messages_from_subject(
     Ok(all_messages)
 }
 
+pub async fn get_all_messages_from_subject_and_stream(
+    jetstream: &Context,
+    subject: String,
+    stream: &str,
+) -> Result<Vec<Message>> {
+    let mut all_messages = Vec::new();
+    let consumer = create_ephemeral_consumer_all_per_subject(jetstream, stream, subject).await?;
+
+    loop {
+        let mut messages = consumer
+            .fetch()
+            .max_messages(100)
+            .messages()
+            .await
+            .map_err(|err| Error::StreamError(err.to_string()))?;
+
+        let mut found_messages = false;
+
+        while let Ok(Some(message)) = messages.try_next().await {
+            found_messages = true;
+            all_messages.push(message);
+        }
+
+        if !found_messages {
+            break;
+        }
+    }
+    Ok(all_messages)
+}
+
 pub async fn get_last_message_from_subject(
     jetstream: &Context,
     subject: String,
