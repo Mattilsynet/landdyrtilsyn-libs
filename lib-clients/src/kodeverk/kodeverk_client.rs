@@ -6,6 +6,7 @@ use reqwest_middleware::reqwest::header::{ACCEPT, HeaderMap, HeaderValue};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
+use crate::arkiv::response::Kodeverk;
 
 pub struct KodeverkClient {
     api_client: ApiClient,
@@ -98,7 +99,7 @@ impl KodeverkClient {
 
         Ok(related_code_list_string)
     }
-    pub async fn get_code(&self, code_type: &str, params: &CodeParams) -> Result<Code> {
+    pub async fn get_code(&self, code_type: &str, params: &CodeParams) -> Result<Kodeverk> {
         let mut url = format!(
             "{}/kodeverk/code/{}",
             self.api_client.get_base_url(),
@@ -141,7 +142,7 @@ impl KodeverkClient {
         let kodeverk_response: Code = serde_json::from_str(&response_text)
             .map_err(|e| ApiError::ParseError(e.to_string()))?;
 
-        Ok(kodeverk_response)
+        Ok(kodeverk_response.to_kodeverk())
     }
 }
 

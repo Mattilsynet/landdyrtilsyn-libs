@@ -42,11 +42,11 @@ pub struct KodeverkResponse {
 pub struct Code {
     children: Option<Vec<Code>>,
     #[serde(rename = "codeString")]
-    code_string: String,
+    pub code_string: String,
     #[serde(rename = "codeType")]
-    code_type: String,
+    pub code_type: String,
     #[serde(rename = "display_names")]
-    display_names: Option<HashMap<String, String>>,
+    pub display_names: Option<HashMap<String, String>>,
     filter: Option<String>,
     valid: Option<bool>,
     #[serde(rename = "version_data")]
