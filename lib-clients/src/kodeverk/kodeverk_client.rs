@@ -1,3 +1,4 @@
+use crate::arkiv::response::Kodeverk;
 use crate::client::ApiClient;
 use crate::error::ApiError;
 use crate::error::Result;
@@ -6,7 +7,6 @@ use reqwest_middleware::reqwest::header::{ACCEPT, HeaderMap, HeaderValue};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
-use crate::arkiv::response::Kodeverk;
 
 pub struct KodeverkClient {
     api_client: ApiClient,
