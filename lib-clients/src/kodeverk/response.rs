@@ -45,11 +45,11 @@ pub struct Code {
     pub code_string: String,
     #[serde(rename = "codeType")]
     pub code_type: String,
-    #[serde(rename = "display_names")]
+    #[serde(rename = "displayNames")]
     pub display_names: Option<HashMap<String, String>>,
     filter: Option<String>,
     valid: Option<bool>,
-    #[serde(rename = "version_data")]
+    #[serde(rename = "versionData")]
     version_data: Option<String>,
     #[serde(rename = "parentid")]
     parent_id: Option<String>,

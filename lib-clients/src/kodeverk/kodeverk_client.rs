@@ -139,6 +139,7 @@ impl KodeverkClient {
             });
         }
 
+        println!("response_text : {}", response_text);
         let kodeverk_response: Code = serde_json::from_str(&response_text)
             .map_err(|e| ApiError::ParseError(e.to_string()))?;
 
