@@ -15,7 +15,9 @@ tracing = { workspace = true }
 chrono = { workspace = true, features = ["serde"] }
 uuid = { workspace = true, features = ["v4"] }
 
-bon = {version = "3.6.3",optional = true}
+bon = {version = "3.6.4",optional = true}
+serde_path_to_error = "0.1.17"
+urlencoding = "2.1.3"
 
 [features]
 orgenhet = ["dep:bon"]
@@ -25,5 +27,6 @@ kodeverk = ["dep:bon"]
 dokument_generator = ["dep:bon"]
 virksomhet = ["dep:bon"]
 tilsynskvittering = ["dep:bon"]
+ejb = ["dep:bon"]
 default = []
 

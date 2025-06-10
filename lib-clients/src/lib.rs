@@ -4,6 +4,7 @@ pub mod bilde;
 pub mod client;
 pub mod config;
 pub mod document_generator;
+pub mod ejb;
 pub mod error;
 pub mod kodeverk;
 pub mod orgenhet;
@@ -42,3 +43,6 @@ pub use virksomhet::{
 pub use tilsynskvittering::{
     response::TilsynsobjektKvittering, tilsynskvittering_client::TilsynskvitteringClient,
 };
+
+#[cfg(feature = "ejb")]
+pub use ejb::{ejb_client::EjbClient, response::Sykdomstilfelle};
