@@ -45,4 +45,6 @@ pub use tilsynskvittering::{
 };
 
 #[cfg(feature = "ejb")]
-pub use ejb::{ejb_client::EjbClient, response::Sykdomstilfelle};
+pub use ejb::{
+    ejb_client::EjbClient, response_begrensninger::Begrensning, response_tilfeller::Sykdomstilfelle,
+};

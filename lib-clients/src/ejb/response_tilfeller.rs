@@ -1,8 +1,72 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
+pub const ALLOWED_FIELDS_TILFELLER: &[&str] = &[
+    "idstring",
+    "version",
+    "typeid",
+    "tilsynsobjektref",
+    "virksomhetref",
+    "registrertdato",
+    "diagnoseid",
+    "mistenktsykdomid",
+    "diagnosegrunnlagid",
+    "mistenktdato",
+    "avkreftadato",
+    "stadfestadato",
+    "avsluttadato",
+    "dtype",
+    "meldtvirksomhetsnavn",
+    "meldttilsynsobjekt",
+    "sykdomstilfellemapperef",
+    "artkategoriid",
+    "samlebehandlingref",
+    "innmeldernavn",
+    "innmeldertlf",
+    "doedevedmistenktdato",
+    "sykevedmistenktdato",
+    "totaltvedutbruddsdato",
+    "doedevedavsluttetdato",
+    "antallpaalagtslaktet",
+    "antallslaktettilkonsum",
+    "gaardsnummer",
+    "bruksnummer",
+    "merdnummer",
+    "idpaafisk",
+    "kommunenummer",
+    "mistankegrunnlagid",
+    "gbridentitet_idstring",
+    "kontaktperson",
+    "tlfnrkontaktperson",
+    "hendelsesdato",
+    "hendelsestidspunkt",
+    "ugyldig",
+    "gbrnummerref",
+    "hendelsetype",
+    "spesifiserthendelsetype",
+    "beskrivelse",
+    "detaljer",
+    "strakstiltak",
+    "tiltaksplan",
+    "mottakeligevedmistanke",
+    "sykevedstadfestelse",
+    "doedevedstadfestelse",
+    "utfoertavlivetdestruert",
+    "antallvaksinert",
+    "paalagtavlivetslaktet",
+    "utfoertavlivetslaktet",
+    "produsentnummer",
+    "produsentref",
+    "paavistvilis",
+    "paavistintermedia",
+    "paavistglabrata",
+    "paavistpilosissima",
+    "antallplanterpaavist",
+    "sistpaavist",
+];
+
 #[derive(Debug, Serialize, Deserialize)]
-pub struct ApiResponse {
+pub struct ApiResponseTilfelle {
     pub results: Vec<Sykdomstilfelle>,
 }
 
@@ -87,7 +151,7 @@ pub struct Sykdomstilfelle {
     pub sistpaavist: Option<DateTime<Utc>>,
 }
 
-mod date_format {
+pub mod date_format {
     use chrono::{DateTime, TimeZone, Utc};
     use serde::{self, Deserialize, Deserializer, Serializer};
 

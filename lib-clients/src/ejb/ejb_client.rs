@@ -1,3 +1,4 @@
+use crate::ejb::response_tilfeller::ALLOWED_FIELDS_TILFELLER;
 use crate::error::ApiError;
 use crate::error::Result;
 use serde::Deserialize;
@@ -7,8 +8,11 @@ use std::collections::HashMap;
 use urlencoding::encode;
 
 use crate::client::ApiClient;
-use crate::ejb::response::{ApiResponse, Sykdomstilfelle};
-use tracing::info;
+use crate::ejb::response_begrensninger::{
+    ALLOWED_FIELDS_BEGRENSNINGER, ApiResponseBegrensninger, Begrensning,
+};
+use crate::ejb::response_tilfeller::{ApiResponseTilfelle, Sykdomstilfelle};
+use tracing::{debug, info};
 use uuid::Uuid;
 
 pub struct EjbClient {
@@ -22,7 +26,7 @@ impl EjbClient {
             api_client: ApiClient::new("EJB", "KEYCLOAK_EJB").await,
         }
     }
-    // Returns: (image data byte array, content-type)
+
     #[tracing::instrument(
         name = "Henter tilfeller for filter",
         skip(self),
@@ -36,7 +40,7 @@ impl EjbClient {
         filter: HashMap<String, FilterCondition>,
         limit: u16,
     ) -> Result<Vec<Sykdomstilfelle>> {
-        let filter = match validate_filter_map(filter) {
+        let filter = match validate_filter_map(filter, &ALLOWED_FIELDS_TILFELLER) {
             Ok(f) => f,
             Err(e) => return Err(e),
         };
@@ -46,7 +50,7 @@ impl EjbClient {
             ApiError::ValidationError(format!("Failed to append filter to URL: {}", e))
         })?;
 
-        info!("Henter tilfelle fra fra: {:?}", url);
+        info!("Henter tilfelle fra url : {:?}", url);
 
         let response = self
             .api_client
@@ -72,7 +76,8 @@ impl EjbClient {
         );
 
         let de = &mut serde_json::Deserializer::from_slice(&r);
-        let result: std::result::Result<ApiResponse, _> = serde_path_to_error::deserialize(de);
+        let result: std::result::Result<ApiResponseTilfelle, _> =
+            serde_path_to_error::deserialize(de);
         match result {
             Ok(obj) => {
                 println!("Deserialized: {:?}", obj.results.first());
@@ -89,71 +94,80 @@ impl EjbClient {
             }
         }
     }
-}
 
-const ALLOWED_FIELDS: &[&str] = &[
-    "idstring",
-    "version",
-    "typeid",
-    "tilsynsobjektref",
-    "virksomhetref",
-    "registrertdato",
-    "diagnoseid",
-    "mistenktsykdomid",
-    "diagnosegrunnlagid",
-    "mistenktdato",
-    "avkreftadato",
-    "stadfestadato",
-    "avsluttadato",
-    "dtype",
-    "meldtvirksomhetsnavn",
-    "meldttilsynsobjekt",
-    "sykdomstilfellemapperef",
-    "artkategoriid",
-    "samlebehandlingref",
-    "innmeldernavn",
-    "innmeldertlf",
-    "doedevedmistenktdato",
-    "sykevedmistenktdato",
-    "totaltvedutbruddsdato",
-    "doedevedavsluttetdato",
-    "antallpaalagtslaktet",
-    "antallslaktettilkonsum",
-    "gaardsnummer",
-    "bruksnummer",
-    "merdnummer",
-    "idpaafisk",
-    "kommunenummer",
-    "mistankegrunnlagid",
-    "gbridentitet_idstring",
-    "kontaktperson",
-    "tlfnrkontaktperson",
-    "hendelsesdato",
-    "hendelsestidspunkt",
-    "ugyldig",
-    "gbrnummerref",
-    "hendelsetype",
-    "spesifiserthendelsetype",
-    "beskrivelse",
-    "detaljer",
-    "strakstiltak",
-    "tiltaksplan",
-    "mottakeligevedmistanke",
-    "sykevedstadfestelse",
-    "doedevedstadfestelse",
-    "utfoertavlivetdestruert",
-    "antallvaksinert",
-    "paalagtavlivetslaktet",
-    "utfoertavlivetslaktet",
-    "produsentnummer",
-    "produsentref",
-    "paavistvilis",
-    "paavistintermedia",
-    "paavistglabrata",
-    "paavistpilosissima",
-    "antallplanterpaavist",
-    "sistpaavist",
-];
+    #[tracing::instrument(
+        name = "Henter begrensinger for filter",
+        skip(self),
+        fields(
+            request_id = %Uuid::new_v4(),
+            limit = %limit,
+            dato = ?dato,
+        )
+    )]
+    pub async fn hent_begrensninger(
+        &self,
+        filter: HashMap<String, FilterCondition>,
+        dato: Option<String>,
+        limit: u16,
+    ) -> Result<Vec<Begrensning>> {
+        let filter = match validate_filter_map(filter, &ALLOWED_FIELDS_BEGRENSNINGER) {
+            Ok(f) => f,
+            Err(e) => return Err(e),
+        };
+
+        let mut url = format!("{}/v1/begrensninger", &self.api_client.get_base_url());
+        let mut url = append_filter_to_url(&url, &filter, Some(limit)).map_err(|e| {
+            ApiError::ValidationError(format!("Failed to append filter to URL: {}", e))
+        })?;
+
+        if let Some(dato_verdi) = dato {
+            url.push_str(&format!("&dato={}", dato_verdi));
+        }
+
+        info!("Henter begrensinger fra url: {:?}", url);
+
+        let response = self
+            .api_client
+            .get_client()
+            .get(&url)
+            .bearer_auth(self.api_client.get_token())
+            .send()
+            .await
+            .map_err(|e| ApiError::ClientError {
+                resource: "reqwest".to_string(),
+                error_message: e.to_string(),
+            })?;
+
+        let r = response.bytes().await?.clone();
+        let raw_json: serde_json::Value =
+            serde_json::from_slice(&r).map_err(|e| ApiError::ClientError {
+                resource: "serde_json".to_string(),
+                error_message: e.to_string(),
+            })?;
+        debug!(
+            "Rå respons:\n{}",
+            serde_json::to_string_pretty(&raw_json).unwrap_or_default()
+        );
+
+        let de = &mut serde_json::Deserializer::from_slice(&r);
+        let result: std::result::Result<ApiResponseBegrensninger, _> =
+            serde_path_to_error::deserialize(de);
+        match result {
+            Ok(obj) => {
+                debug!("Deserialized: {:?}", obj.results.first());
+                Ok(obj.results)
+            }
+            Err(e) => {
+                println!("Failed at path: {}", e.path());
+                println!("Serde error: {}", e.inner());
+                Err(ApiError::ClientError {
+                    resource: "hent_tilfelle".to_string(),
+                    error_message: "Fant ikke tilfelle i response".to_string(),
+                })
+            }
+        }
+    }
+}
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(untagged)]
@@ -161,11 +175,13 @@ pub enum FilterCondition {
     SingleOp { eq: Value },
     MultiOp(HashMap<String, Value>),
 }
+
 pub fn validate_filter_map(
     input: HashMap<String, FilterCondition>,
+    allowed_fields: &[&str],
 ) -> Result<HashMap<String, FilterCondition>> {
     for key in input.keys() {
-        if !ALLOWED_FIELDS.contains(&key.as_str()) {
+        if !allowed_fields.contains(&key.as_str()) {
             return Err(ApiError::ValidationError(format!(
                 "Ugyldig filterfelt: {}",
                 key
