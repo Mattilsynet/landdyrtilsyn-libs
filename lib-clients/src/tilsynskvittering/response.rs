@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -20,13 +20,13 @@ pub struct TidligereTilsynskvitteringInfo {
     #[serde(rename = "feilmelding")]
     pub feilmelding: Option<String>,
     #[serde(rename = "feilmeldingKode")]
-    pub feilmelding_kode: Option<String>,
-    pub status: String,
-    pub tilsynsdato: Option<DateTime<Utc>>,
+    pub feilmelding_kode: Option<i32>,
+    pub status: Option<String>,
+    pub tilsynsdato: Option<NaiveDate>,
     #[serde(rename = "tilsynskvitteringId")]
-    pub tilsynskvittering_id: String,
+    pub tilsynskvittering_id: Option<i64>,
     #[serde(rename = "userId")]
-    pub user_id: String,
+    pub user_id: Option<String>,
     #[serde(rename = "ansattNavn")]
     pub ansatt_navn: String,
     #[serde(rename = "antallBilder")]
