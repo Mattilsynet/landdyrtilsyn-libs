@@ -14,9 +14,9 @@ pub struct TidligereTilsynskvitteringInfo {
     #[serde(rename = "externalTilsynsobjektId")]
     pub external_tilsynsobjekt_id: String,
     #[serde(rename = "noarksakAar")]
-    pub noarksak_aar: i32,
+    pub noarksak_aar: String,
     #[serde(rename = "noarksakSekvensnummer")]
-    pub noarksak_sekvensnummer: i32,
+    pub noarksak_sekvensnummer: String,
     #[serde(rename = "feilmelding")]
     pub feilmelding: Option<String>,
     #[serde(rename = "feilmeldingKode")]
