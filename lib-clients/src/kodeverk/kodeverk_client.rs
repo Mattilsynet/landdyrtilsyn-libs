@@ -49,7 +49,7 @@ impl KodeverkClient {
             kodetype,
             kodenavn
         );
-        println!("url : {}", url);
+        debug!("url : {}", url);
 
         let client = self.api_client.get_client();
         let token = self.api_client.get_token();
@@ -79,12 +79,12 @@ impl KodeverkClient {
                 ),
             });
         }
-        println!("response_text : {}", response_text);
+        debug!("response_text : {}", response_text);
 
         let kodeverk_response: KodeverkResponse = serde_json::from_str(&response_text)
             .map_err(|e| ApiError::ParseError(e.to_string()))?;
 
-        println!(
+        debug!(
             "kodeverk_response : {:?}",
             kodeverk_response._embedded.related_code_list
         );
@@ -139,7 +139,7 @@ impl KodeverkClient {
             });
         }
 
-        println!("response_text : {}", response_text);
+        debug!("response_text : {}", response_text);
         let kodeverk_response: Code = serde_json::from_str(&response_text)
             .map_err(|e| ApiError::ParseError(e.to_string()))?;
 
