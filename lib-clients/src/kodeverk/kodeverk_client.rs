@@ -5,6 +5,7 @@ use crate::error::Result;
 use crate::kodeverk::response::{Code, KodeverkResponse};
 use reqwest_middleware::reqwest::header::{ACCEPT, HeaderMap, HeaderValue};
 use serde::{Deserialize, Serialize};
+use tracing::debug;
 use tracing::instrument;
 use uuid::Uuid;
 
@@ -74,8 +75,7 @@ impl KodeverkClient {
             return Err(ApiError::ClientError {
                 resource: "org_enhet".to_string(),
                 error_message: format!(
-                    "Failed to get kodeverk relation, HTTP Status: {}, response {}",
-                    status, response_text
+                    "Failed to get kodeverk relation, HTTP Status: {status}, response {response_text}"
                 ),
             });
         }
@@ -108,13 +108,13 @@ impl KodeverkClient {
 
         let mut query_parts = vec![];
         if let Some(root_code) = &params.root_code {
-            query_parts.push(format!("rootCode={}", root_code));
+            query_parts.push(format!("rootCode={root_code}"));
         }
         if let Some(filter) = &params.filter {
-            query_parts.push(format!("filter={}", filter));
+            query_parts.push(format!("filter={filter}"));
         }
         if let Some(include_inactive) = params.include_inactive {
-            query_parts.push(format!("includeInactive={}", include_inactive));
+            query_parts.push(format!("includeInactive={include_inactive}"));
         }
 
         if !query_parts.is_empty() {
@@ -133,8 +133,7 @@ impl KodeverkClient {
             return Err(ApiError::ClientError {
                 resource: "org_enhet".to_string(),
                 error_message: format!(
-                    "Failed to get kodeverk relation, HTTP Status: {}, response {}",
-                    status, response_text
+                    "Failed to get kodeverk relation, HTTP Status: {status}, response {response_text}"
                 ),
             });
         }
