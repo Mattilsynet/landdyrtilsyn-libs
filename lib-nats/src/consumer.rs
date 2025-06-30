@@ -11,8 +11,8 @@ pub async fn get_or_create_durable_consumer(
     filter_subject: String,
     name: &str,
     durable_name: &str,
-) -> Result<consumer::PullConsumer> {
-    let consumer: consumer::PullConsumer = context
+) -> Result<PullConsumer> {
+    let consumer: PullConsumer = context
         .get_stream(stream_name)
         .await?
         .get_or_create_consumer(
@@ -35,8 +35,8 @@ pub async fn get_or_create_stream_and_consumer(
     durable_name: &str,
     num_replicas: usize,
     consumer_subject: &str,
-) -> Result<consumer::PullConsumer> {
-    let consumer: consumer::PullConsumer = context
+) -> Result<PullConsumer> {
+    let consumer: PullConsumer = context
         .get_or_create_stream(stream::Config {
             name: stream_name.to_string(),
             subjects,
@@ -81,8 +81,8 @@ pub async fn create_ephemeral_consumer_last_per_subject(
     context: &Context,
     stream_name: &str,
     filter_subject: String,
-) -> Result<consumer::PullConsumer> {
-    let consumer: consumer::PullConsumer = context
+) -> Result<PullConsumer> {
+    let consumer: PullConsumer = context
         .get_stream(stream_name)
         .await?
         .get_or_create_consumer(
@@ -101,8 +101,8 @@ pub async fn create_ephemeral_consumer_all_per_subject(
     context: &Context,
     stream_name: &str,
     filter_subject: String,
-) -> Result<consumer::PullConsumer> {
-    let consumer: consumer::PullConsumer = context
+) -> Result<PullConsumer> {
+    let consumer: PullConsumer = context
         .get_stream(stream_name)
         .await?
         .get_or_create_consumer(
@@ -215,8 +215,8 @@ pub async fn get_or_create_durable_max_deliveries_consumer(
     ack_wait: Option<Duration>,
     max_deliver: Option<i64>,
     backoff: Option<Vec<Duration>>,
-) -> Result<consumer::PullConsumer> {
-    let consumer: consumer::PullConsumer = context
+) -> Result<PullConsumer> {
+    let consumer: PullConsumer = context
         .get_stream(stream_name)
         .await?
         .get_or_create_consumer(
