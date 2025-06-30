@@ -60,10 +60,10 @@ impl ArkivClient {
         let response = self.api_client.api_get(&url).await?;
 
         if response.status().is_success() {
-            let text = response.text().await.unwrap();
+            let text = response.text().await?;
             let sak: ArkivClientSak =
                 serde_json::from_str(&text).map_err(|e| ApiError::ParseError(e.to_string()))?;
-            info!("Hentet sak {:?} fra arkiv api.", sak);
+            info!("Hentet sak {sak:?} fra arkiv api.");
             Ok(sak)
         } else {
             let status = response.status();
@@ -72,15 +72,13 @@ impl ArkivClient {
                 .await
                 .unwrap_or_else(|_| "Unknown error".to_string());
             error!(
-                "Klarte ikke hente sak {}/{}, error message {}",
-                noarkaar, noarksaksnummer, error_message
+                "Klarte ikke hente sak {noarkaar}/{noarksaksnummer}, error message {error_message}"
             );
 
             Err(ApiError::ClientError {
                 resource: "Arkiv".to_string(),
                 error_message: format!(
-                    "Failed to get arkiv sak, HTTP Status: {}, response {}",
-                    status, error_message
+                    "Failed to get arkiv sak, HTTP Status: {status}, response {error_message}"
                 ),
             })
         }
@@ -133,8 +131,7 @@ impl ArkivClient {
             Err(ApiError::ClientError {
                 resource: "Arkiv".to_string(),
                 error_message: format!(
-                    "Failed to get arkiv sak, HTTP Status: {}, response {}",
-                    status, error_message
+                    "Failed to get arkiv sak, HTTP Status: {status}, response {error_message}"
                 ),
             })
         }
@@ -177,8 +174,7 @@ impl ArkivClient {
             return Err(ApiError::ClientError {
                 resource: "Arkiv".to_string(),
                 error_message: format!(
-                    "Failed to create arkiv sak, HTTP Status: {}, response {}",
-                    status, response_text
+                    "Failed to create arkiv sak, HTTP Status: {status}, response {response_text}"
                 ),
             });
         }
@@ -221,15 +217,14 @@ impl ArkivClient {
             return Err(ApiError::ClientError {
                 resource: "Arkiv".to_string(),
                 error_message: format!(
-                    "Failed to legg_til_journalpost_paa_sak arkiv sak, HTTP Status: {}, response {}",
-                    status, response_text
+                    "Failed to legg_til_journalpost_paa_sak arkiv sak, HTTP Status: {status}, response {response_text}"
                 ),
             });
         }
         let archive_response: ArkivPdfKvittering =
             serde_json::from_str(&response_text).map_err(|e| ApiError::ClientError {
                 resource: "Arkiv".to_string(),
-                error_message: format!("RESPONSE : {} : error : {}", response_text, e),
+                error_message: format!("RESPONSE : {response_text} : error : {e}"),
             })?;
         Ok(archive_response)
     }
@@ -268,15 +263,14 @@ impl ArkivClient {
             return Err(ApiError::ClientError {
                 resource: "Arkiv".to_string(),
                 error_message: format!(
-                    "Failed to legg_til_journalpost_paa_sak_med_arkiv_bruker paa arkiv sak, HTTP Status: {}, response {}",
-                    status, response_text
+                    "Failed to legg_til_journalpost_paa_sak_med_arkiv_bruker paa arkiv sak, HTTP Status: {status}, response {response_text}"
                 ),
             });
         }
         let archive_response: ArkivPdfKvittering =
             serde_json::from_str(&response_text).map_err(|e| ApiError::ClientError {
                 resource: "Arkiv".to_string(),
-                error_message: format!("RESPONSE : {} : error : {}", response_text, e),
+                error_message: format!("RESPONSE : {response_text} : error : {e}"),
             })?;
         Ok(archive_response)
     }
@@ -327,8 +321,7 @@ impl ArkivClient {
             return Err(ApiError::ClientError {
                 resource: "Arkiv".to_string(),
                 error_message: format!(
-                    "Failed to legg_til_vedlegg_paa_journalpost arkiv sak, HTTP Status: {}, response {}",
-                    status, response_text
+                    "Failed to legg_til_vedlegg_paa_journalpost arkiv sak, HTTP Status: {status}, response {response_text}"
                 ),
             });
         }
@@ -386,8 +379,7 @@ impl ArkivClient {
             return Err(ApiError::ClientError {
                 resource: "Arkiv".to_string(),
                 error_message: format!(
-                    "Failed to set_journalpost_status arkiv sak, HTTP Status: {}, response {}",
-                    status, response_text
+                    "Failed to set_journalpost_status arkiv sak, HTTP Status: {status}, response {response_text}"
                 ),
             });
         }
@@ -442,8 +434,7 @@ impl ArkivClient {
             return Err(ApiError::ClientError {
                 resource: "Arkiv".to_string(),
                 error_message: format!(
-                    "Failed put saksansvarlig, HTTP Status: {}, response {}",
-                    status, response_text
+                    "Failed put saksansvarlig, HTTP Status: {status}, response {response_text}"
                 ),
             });
         }
@@ -501,8 +492,7 @@ impl ArkivClient {
             return Err(ApiError::ClientError {
                 resource: "Arkiv".to_string(),
                 error_message: format!(
-                    "Failed to set_sak_status arkiv sak, HTTP Status: {}, response {}",
-                    status, response_text
+                    "Failed to set_sak_status arkiv sak, HTTP Status: {status}, response {response_text}"
                 ),
             });
         }
@@ -557,8 +547,7 @@ impl ArkivClient {
             return Err(ApiError::ClientError {
                 resource: "Arkiv".to_string(),
                 error_message: format!(
-                    "Failed to avskriv_restanse_journalpost {}, HTTP Status: {}, response {}",
-                    journalpost_id, status, response_text
+                    "Failed to avskriv_restanse_journalpost {journalpost_id}, HTTP Status: {status}, response {response_text}"
                 ),
             });
         }
