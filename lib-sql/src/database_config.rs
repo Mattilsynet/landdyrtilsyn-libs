@@ -57,7 +57,7 @@ pub async fn get_database_pool() -> Result<DbPool, sqlx::Error> {
             host,
             port,
             database_name,
-            database_connection_name: "".into(),
+            database_connection_name: String::new(),
         };
         settings.local_connection_string()
     } else {
@@ -66,7 +66,7 @@ pub async fn get_database_pool() -> Result<DbPool, sqlx::Error> {
         let settings = DatabaseSettings {
             username,
             password: password.into(),
-            host: "".into(),
+            host: String::new(),
             port: 5432,
             database_name,
             database_connection_name,
