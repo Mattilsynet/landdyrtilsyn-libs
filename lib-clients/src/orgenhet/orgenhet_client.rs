@@ -105,11 +105,9 @@ impl OrgEnhetClient {
             Err(ApiError::ClientError {
                 resource: "org_enhet".to_string(),
                 error_message: format!(
-                    "Failed to fetch ansatte i avdeling. HTTP Status: {}, response: {}",
-                    status, error_message
+                    "Failed to fetch ansatte i avdeling. HTTP Status: {status}, response: {error_message}"
                 ),
             })
-            .into()
         }
     }
 
@@ -178,11 +176,9 @@ impl OrgEnhetClient {
             Err(ApiError::ClientError {
                 resource: "org_enhet".to_string(),
                 error_message: format!(
-                    "Failed to fetch ansatte i seksjon. HTTP Status: {}, response: {}",
-                    status, error_message
+                    "Failed to fetch ansatte i seksjon. HTTP Status: {status}, response: {error_message}"
                 ),
             })
-            .into()
         }
     }
 
@@ -212,17 +208,14 @@ impl OrgEnhetClient {
                 .await
                 .unwrap_or_else(|_| "Unknown error".to_string());
             error!(
-                "Klarte ikke hente ansatte. avdeling_id {}, error code {}, error message {}",
-                avdeling_id, status, error_message
+                "Klarte ikke hente ansatte. avdeling_id {avdeling_id}, error code {status}, error message {error_message}"
             );
             Err(ApiError::ClientError {
                 resource: "org_enhet".to_string(),
                 error_message: format!(
-                    "Failed to fetch ansatte i avdeling. HTTP Status: {}, response: {}",
-                    status, error_message
+                    "Failed to fetch ansatte i avdeling. HTTP Status: {status}, response: {error_message}"
                 ),
             })
-            .into()
         }
     }
 
@@ -262,8 +255,7 @@ impl OrgEnhetClient {
             Err(ApiError::ClientError {
                 resource: "org_enhet".to_string(),
                 error_message: format!(
-                    "Failed to fetch ansatte i avdeling. HTTP Status: {}, response: {}",
-                    status, error_message
+                    "Failed to fetch ansatte i avdeling. HTTP Status: {status}, response: {error_message}"
                 ),
             })
         }
@@ -291,14 +283,12 @@ impl OrgEnhetClient {
                 .await
                 .unwrap_or_else(|_| "Unknown error".to_string());
             error!(
-                "Klarte ikke hente regioner. error code {}, error message {}",
-                status, error_message
+                "Klarte ikke hente regioner. error code {status}, error message {error_message}"
             );
             Err(ApiError::ClientError {
                 resource: "org_enhet".to_string(),
                 error_message: format!(
-                    "Failed to fetch regioner. HTTP Status: {}, response: {}",
-                    status, error_message
+                    "Failed to fetch regioner. HTTP Status: {status}, response: {error_message}"
                 ),
             })
         }
@@ -332,8 +322,7 @@ impl OrgEnhetClient {
             Err(ApiError::ClientError {
                 resource: "org_enhet".to_string(),
                 error_message: format!(
-                    "Failed to fetch avdelinger. HTTP Status: {}, response: {}",
-                    status, error_message
+                    "Failed to fetch avdelinger. HTTP Status: {status}, response: {error_message}"
                 ),
             })
         }
@@ -367,8 +356,7 @@ impl OrgEnhetClient {
             Err(ApiError::ClientError {
                 resource: "org_enhet".to_string(),
                 error_message: format!(
-                    "Failed to fetch regioner. HTTP Status: {}, response: {}",
-                    status, error_message
+                    "Failed to fetch regioner. HTTP Status: {status}, response: {error_message}"
                 ),
             })
         }
@@ -403,8 +391,7 @@ impl OrgEnhetClient {
             return Err(ApiError::ClientError {
                 resource: "org_enhet".to_string(),
                 error_message: format!(
-                    "Failed to get kontor, HTTP Status: {}, response {}",
-                    status, response_text
+                    "Failed to get kontor, HTTP Status: {status}, response {response_text}"
                 ),
             });
         }
