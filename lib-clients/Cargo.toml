@@ -19,6 +19,8 @@ bon = {version = "3.6.4",optional = true}
 serde_path_to_error = "0.1.17"
 urlencoding = "2.1.3"
 
+lib_schemas = { path = "../lib-schemas", package = "lib-schemas", features = ["arkiv"] }
+
 [features]
 orgenhet = ["dep:bon"]
 bilde = ["dep:bon"]

@@ -40,14 +40,14 @@ impl EjbClient {
         filter: HashMap<String, FilterCondition>,
         limit: u16,
     ) -> Result<Vec<Sykdomstilfelle>> {
-        let filter = match validate_filter_map(filter, &ALLOWED_FIELDS_TILFELLER) {
+        let filter = match validate_filter_map(filter, ALLOWED_FIELDS_TILFELLER) {
             Ok(f) => f,
             Err(e) => return Err(e),
         };
 
         let url = format!("{}/v1/tilfeller", &self.api_client.get_base_url());
         let url = append_filter_to_url(&url, &filter, Some(limit)).map_err(|e| {
-            ApiError::ValidationError(format!("Failed to append filter to URL: {}", e))
+            ApiError::ValidationError(format!("Failed to append filter to URL: {e}"))
         })?;
 
         info!("Henter tilfelle fra url : {:?}", url);
@@ -110,18 +110,18 @@ impl EjbClient {
         dato: Option<String>,
         limit: u16,
     ) -> Result<Vec<Begrensning>> {
-        let filter = match validate_filter_map(filter, &ALLOWED_FIELDS_BEGRENSNINGER) {
+        let filter = match validate_filter_map(filter, ALLOWED_FIELDS_BEGRENSNINGER) {
             Ok(f) => f,
             Err(e) => return Err(e),
         };
 
-        let mut url = format!("{}/v1/begrensninger", &self.api_client.get_base_url());
+        let url = format!("{}/v1/begrensninger", &self.api_client.get_base_url());
         let mut url = append_filter_to_url(&url, &filter, Some(limit)).map_err(|e| {
-            ApiError::ValidationError(format!("Failed to append filter to URL: {}", e))
+            ApiError::ValidationError(format!("Failed to append filter to URL: {e}"))
         })?;
 
         if let Some(dato_verdi) = dato {
-            url.push_str(&format!("&dato={}", dato_verdi));
+            url.push_str(&format!("&dato={dato_verdi}"));
         }
 
         info!("Henter begrensinger fra url: {:?}", url);
@@ -183,8 +183,7 @@ pub fn validate_filter_map(
     for key in input.keys() {
         if !allowed_fields.contains(&key.as_str()) {
             return Err(ApiError::ValidationError(format!(
-                "Ugyldig filterfelt: {}",
-                key
+                "Ugyldig filterfelt: {key}"
             )));
         }
     }
@@ -197,12 +196,12 @@ pub fn append_filter_to_url(
     limit: Option<u16>,
 ) -> Result<String> {
     let json_value = serde_json::to_value(filters)
-        .map_err(|e| ApiError::ValidationError(format!("Failed to serialize filters: {}", e)))?;
+        .map_err(|e| ApiError::ValidationError(format!("Failed to serialize filters: {e}")))?;
     let json_string = json_value.to_string();
     let encoded_filter = encode(&json_string);
-    let mut url = format!("{}?filter={}", base_url, encoded_filter);
+    let mut url = format!("{base_url}?filter={encoded_filter}");
     if let Some(lim) = limit {
-        url.push_str(&format!("&limit={}", lim));
+        url.push_str(&format!("&limit={lim}"));
     }
     Ok(url)
 }

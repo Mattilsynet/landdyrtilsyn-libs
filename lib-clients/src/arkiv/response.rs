@@ -1,8 +1,7 @@
-use crate::error::ApiError;
-use crate::error::Result as ErrorResult;
 use core::fmt;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use std::str::FromStr;
+use lib_schemas::arkiv::{Landkode, SaksTittel, Saksaar, sak::NySak};
+use lib_schemas::{Tilgangshjemmel, Tilgangskode};
+use serde::{Deserialize, Deserializer, Serialize};
 
 /**
 * Arkivsak benyttes på getSak og post sak i arkiv
@@ -71,6 +70,27 @@ pub struct ArkivClientJournalpost {
 pub struct Kodeverk {
     pub id: String,
     pub beskrivelse: String,
+}
+
+impl From<Tilgangshjemmel> for Kodeverk {
+    fn from(value: Tilgangshjemmel) -> Self {
+        let hjemmel = value.hjemmel();
+        Kodeverk {
+            id: format!("TILGANGSHJEMMEL${hjemmel}"),
+            beskrivelse: hjemmel.to_string(),
+        }
+    }
+}
+
+impl From<Tilgangskode> for Kodeverk {
+    fn from(value: Tilgangskode) -> Self {
+        match value {
+            Tilgangskode::UnntattOffentlighet => Kodeverk {
+                id: "TILGANGSKODE$UO".to_string(),
+                beskrivelse: "".to_string(),
+            },
+        }
+    }
 }
 
 /**
@@ -203,19 +223,22 @@ pub struct ArkivSakArkivering {
     pub virksomhetsmappe_id: Option<String>,
 }
 
-impl ArkivSakArkivering {
-    pub fn validate_skjerming(&self) -> ErrorResult<()> {
-        let is_tittel_with_skjerming = self.tittel.0.contains('[');
-        let has_both_skjerming_and_tilgangskode =
-            self.tilgangskode.is_some() && self.skjermingshjemmel.is_some();
-
-        if is_tittel_with_skjerming && !has_both_skjerming_and_tilgangskode {
-            return Err(ApiError::ValidationError(
-                "En skjermet arkivsak må ha tilgangskode og skjermingshjemmel.".to_string(),
-            ));
+impl From<NySak> for ArkivSakArkivering {
+    fn from(value: NySak) -> Self {
+        // Tilpass felter etter behov
+        ArkivSakArkivering {
+            noarkaar: None,
+            noarksaksnummer: None,
+            saksbehandler_id: value.saksbehandler_id,
+            mt_enhet: value.mt_enhet,
+            ordningsverdi: value.ordningsverdi,
+            tittel: value.tittel,
+            skjermingshjemmel: value.skjermingshjemmel.map(|v| v.into()),
+            tilgangskode: value.tilgangskode.map(|v| v.into()),
+            status: None,
+            lukket: false,
+            virksomhetsmappe_id: None,
         }
-
-        Ok(())
     }
 }
 
@@ -446,175 +469,6 @@ impl ArkiverDokument {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct Landkode(String);
-
-impl Serialize for Landkode {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_str(&self.0)
-    }
-}
-
-impl<'de> Deserialize<'de> for Landkode {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        Ok(Landkode(s))
-    }
-}
-
-#[derive(Debug)]
-pub enum LandkodeError {
-    InvalidLength,
-    InvalidCharacters,
-}
-
-impl FromStr for Landkode {
-    type Err = LandkodeError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.len() != 2 {
-            return Err(LandkodeError::InvalidLength);
-        }
-
-        if !s.chars().all(|c| c.is_ascii_uppercase()) {
-            return Err(LandkodeError::InvalidCharacters);
-        }
-
-        Ok(Landkode(s.to_string()))
-    }
-}
-
-impl std::fmt::Display for Landkode {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl Landkode {
-    pub fn new(s: &str) -> Result<Self, LandkodeError> {
-        s.parse()
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct Saksaar(pub String);
-
-impl Serialize for Saksaar {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_str(&self.0)
-    }
-}
-
-impl<'de> Deserialize<'de> for Saksaar {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        Ok(Saksaar(s))
-    }
-}
-
-impl fmt::Display for Saksaar {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-#[derive(Debug)]
-pub enum SaksaarError {
-    InvalidLength,
-    InvalidCharacters,
-}
-
-impl FromStr for Saksaar {
-    type Err = SaksaarError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.len() != 4 {
-            return Err(SaksaarError::InvalidLength);
-        }
-
-        if !s.chars().all(|c| c.is_ascii_digit()) {
-            return Err(SaksaarError::InvalidCharacters);
-        }
-
-        Ok(Saksaar(s.to_string()))
-    }
-}
-
-impl Saksaar {
-    pub fn new(s: &str) -> Result<Self, SaksaarError> {
-        s.parse()
-    }
-}
-
-/**
-* SaksTittel benyttes på opprettelse av sak i arkiv
-*/
-const SAKSTITTEL_MAX_LENGTH: usize = 256;
-
-#[derive(Debug, Clone)]
-pub struct SaksTittel(String);
-
-impl Serialize for SaksTittel {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_str(&self.0)
-    }
-}
-
-impl<'de> Deserialize<'de> for SaksTittel {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        Ok(SaksTittel(s))
-    }
-}
-
-#[derive(Debug)]
-pub enum SaksTittelError {
-    Empty,
-    TooLong,
-}
-
-impl FromStr for SaksTittel {
-    type Err = SaksTittelError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let trimmed = s.trim();
-
-        if trimmed.is_empty() {
-            return Err(SaksTittelError::Empty);
-        }
-
-        if trimmed.len() > SAKSTITTEL_MAX_LENGTH {
-            return Err(SaksTittelError::TooLong);
-        }
-
-        Ok(SaksTittel(trimmed.to_string()))
-    }
-}
-
-impl std::fmt::Display for SaksTittel {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
 // Implement Display for Kodeverk
 impl fmt::Display for Kodeverk {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -781,7 +635,7 @@ impl fmt::Display for ArkiverDokument {
         // For mottakere, display each one using their Display implementation
         writeln!(f, "  mottakere: [")?;
         for mottaker in &self.mottakere {
-            writeln!(f, "    {},", mottaker)?;
+            writeln!(f, "    {mottaker},")?;
         }
         writeln!(f, "  ],")?;
 

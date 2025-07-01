@@ -32,6 +32,7 @@ pub use bilde::{bilde_client::BildeClient, response::ImageMetaData};
 #[cfg(feature = "arkiv")]
 pub use arkiv::{
     arkiv_client::ArkivClient, response::ArkivClientJournalpost, response::ArkivClientSak,
+    response::Kodeverk,
 };
 
 #[cfg(feature = "virksomhet")]

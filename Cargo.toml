@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [workspace]
-members = ["lib-keycloak-client", "lib-auth", "lib-google-cloud-storage", "lib-sql", "lib-nats", "lib-clients"]
+members = ["lib-keycloak-client", "lib-auth", "lib-google-cloud-storage", "lib-sql", "lib-nats", "lib-clients", "lib-schemas"]
 
 [workspace.dependencies]
 serde = { version = "1.0.219", features = ["derive"] }
@@ -13,7 +13,7 @@ secrecy = "0.10.3"
 tracing = "0.1.41"
 thiserror = "2.0.12"
 
-reqwest = { version = "0.12.19", features = ["json", "rustls-tls"]}
+reqwest = { version = "0.12.20", features = ["json", "rustls-tls"]}
 reqwest-retry = "0.7.0"
 reqwest-middleware = { version = "0.4.2", features = ["json", "rustls-tls"] }
 
