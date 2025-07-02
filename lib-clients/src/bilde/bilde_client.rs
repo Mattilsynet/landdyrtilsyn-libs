@@ -28,7 +28,7 @@ impl BildeClient {
             storrelse,
             filter,
         );
-        info!("Henter bilde fra: {:?}", url);
+        info!("Henter bilde fra: {url:?}");
         let response = self.api_client.api_get(&url).await?;
 
         if response.status().is_success() {
@@ -52,14 +52,12 @@ impl BildeClient {
                 .await
                 .unwrap_or_else(|_| "Unknown error".to_string());
             error!(
-                "Klarte ikke hente bilde. bilde_id {}, error code {}, error message {}",
-                bilde_id, status, error_message
+                "Klarte ikke hente bilde. bilde_id {bilde_id}, error code {status}, error message {error_message}"
             );
             Err(ApiError::ClientError {
                 resource: "bilde-api".to_string(),
                 error_message: format!(
-                    "Failed to fetch bilde. HTTP Status: {}, response: {}",
-                    status, error_message
+                    "Failed to fetch bilde. HTTP Status: {status}, response: {error_message}"
                 ),
             })
         }
@@ -98,7 +96,7 @@ impl BildeClient {
             bilde_id,
             filter,
         );
-        info!("Henter bilde metadata fra: {:?}", url);
+        info!("Henter bilde metadata fra: {url:?}");
         let response = self.api_client.api_get(&url).await?;
 
         if response.status().is_success() {
@@ -106,7 +104,7 @@ impl BildeClient {
                 .json()
                 .await
                 .map_err(|e| ApiError::ParseError(e.to_string()))?;
-            info!("Hentet bilde metadata {:?} fra bilde api.", metadata);
+            info!("Hentet bilde metadata {metadata:?} fra bilde api.");
             Ok(metadata)
         } else {
             let status = response.status();
@@ -115,14 +113,12 @@ impl BildeClient {
                 .await
                 .unwrap_or_else(|_| "Unknown error".to_string());
             error!(
-                "Klarte ikke hente bilde medtadata. bilde_id {}, error code {}, error message {}",
-                bilde_id, status, error_message
+                "Klarte ikke hente bilde medtadata. bilde_id {bilde_id}, error code {status}, error message {error_message}"
             );
             Err(ApiError::ClientError {
                 resource: "bilde-api".to_string(),
                 error_message: format!(
-                    "Failed to fetch bilde metadata. HTTP Status: {}, response: {}",
-                    status, error_message
+                    "Failed to fetch bilde metadata. HTTP Status: {status}, response: {error_message}"
                 ),
             })
         }

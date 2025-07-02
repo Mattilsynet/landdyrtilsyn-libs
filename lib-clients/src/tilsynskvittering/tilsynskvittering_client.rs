@@ -61,8 +61,7 @@ impl TilsynskvitteringClient {
                 serde_json::from_str(&text).map_err(|e| ApiError::ParseError(e.to_string()))?;
             let tidligere_tilsyn = tidligere_tilsyn_response.embedded.tidligere_tilsyn_list;
             info!(
-                "Hentet tidligere tilsyn på tilsynobjekt(r) {:?} fra tilsynskvittering-api.",
-                tilsynsobjekt_ids
+                "Hentet tidligere tilsyn på tilsynobjekt(r) {tilsynsobjekt_ids:?} fra tilsynskvittering-api."
             );
             Ok(tidligere_tilsyn)
         } else {
@@ -74,8 +73,7 @@ impl TilsynskvitteringClient {
             Err(ApiError::ClientError {
                 resource: "tilsynskvittering-api".to_string(),
                 error_message: format!(
-                    "Failed to fetch info. HTTP Status: {}, response: {}",
-                    status, error_message
+                    "Failed to fetch info. HTTP Status: {status}, response: {error_message}"
                 ),
             })
         }

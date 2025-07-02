@@ -189,8 +189,7 @@ pub mod date_format {
                 }
 
                 Err(serde::de::Error::custom(format!(
-                    "Ugyldig datoformat. Forventet '{}' eller '{}'",
-                    FORMAT_DATETIME, FORMAT_DATE
+                    "Ugyldig datoformat. Forventet '{FORMAT_DATETIME}' eller '{FORMAT_DATE}'"
                 )))
             }
             None => Ok(None),

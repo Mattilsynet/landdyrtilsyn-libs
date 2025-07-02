@@ -125,7 +125,7 @@ impl OrgEnhetClient {
                 .json()
                 .await
                 .map_err(|e| ApiError::ParseError(e.to_string()))?;
-            info!("Hentet ansatt {:?} fra org_enhet api.", ansatt);
+            info!("Hentet ansatt {ansatt:?} fra org_enhet api.");
             Ok(ansatt)
         } else {
             let status = response.status();
@@ -137,8 +137,7 @@ impl OrgEnhetClient {
             Err(ApiError::ClientError {
                 resource: "org_enhet".to_string(),
                 error_message: format!(
-                    "Failed to fetch ansatte i avdeling. HTTP Status: {}, response: {}",
-                    status, error_message
+                    "Failed to fetch ansatte i avdeling. HTTP Status: {status}, response: {error_message}"
                 ),
             })?
         }
@@ -170,8 +169,7 @@ impl OrgEnhetClient {
                 .await
                 .unwrap_or_else(|_| "Unknown error".to_string());
             error!(
-                "Klarte ikke hente ansatte. seksjon_id {}, error code {}, error message {}",
-                seksjon_id, status, error_message
+                "Klarte ikke hente ansatte. seksjon_id {seksjon_id}, error code {status}, error message {error_message}"
             );
             Err(ApiError::ClientError {
                 resource: "org_enhet".to_string(),

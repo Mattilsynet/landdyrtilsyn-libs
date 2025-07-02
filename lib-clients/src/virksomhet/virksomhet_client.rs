@@ -38,8 +38,7 @@ impl VirksomhetClient {
             Err(ApiError::ClientError {
                 resource: "virksomhet-api".to_string(),
                 error_message: format!(
-                    "Failed to fetch virksomhet. HTTP Status: {}, response: {}",
-                    status, error_message
+                    "Failed to fetch virksomhet. HTTP Status: {status}, response: {error_message}"
                 ),
             })
         }
@@ -73,8 +72,7 @@ impl VirksomhetClient {
             Err(ApiError::ClientError {
                 resource: "virksomhet-api".to_string(),
                 error_message: format!(
-                    "Failed to fetch underenheter. HTTP Status: {}, response: {}",
-                    status, error_message
+                    "Failed to fetch underenheter. HTTP Status: {status}, response: {error_message}"
                 ),
             })
         }
