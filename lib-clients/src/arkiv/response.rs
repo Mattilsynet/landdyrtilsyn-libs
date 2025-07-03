@@ -246,7 +246,7 @@ impl From<NySak> for ArkivSakArkivering {
 impl From<ArkivSakArkivering> for Sak {
     fn from(value: ArkivSakArkivering) -> Self {
         Sak {
-            saksnummer: value.noarksaksnummer.unwrap(),
+            sekvensnummer: value.noarksaksnummer.unwrap(),
             saksaar: value.noarkaar.unwrap(),
             tittel: if value.tilgangskode.as_ref().map(|k| k.id.as_str()) == Some("UO") {
                 value.tittel.uo_tittel()

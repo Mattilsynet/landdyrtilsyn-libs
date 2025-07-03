@@ -34,7 +34,7 @@ impl NySak {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Sak {
-    pub saksnummer: String,
+    pub sekvensnummer: String,
     pub saksaar: Saksaar,
     pub tittel: SaksTittel,
     pub status: String,
