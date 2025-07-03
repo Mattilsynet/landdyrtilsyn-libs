@@ -182,53 +182,6 @@ impl ArkivClient {
     }
 
     #[tracing::instrument(
-        name = "Oppretter arkiv sak",
-        skip(self),
-        fields(request_id = %Uuid::new_v4(), arkiv_sak = %arkiv_post_sak)
-    )]
-    #[deprecated]
-    pub async fn opprett_arkiv_sak_med_mt_enhet(
-        &self,
-        arkiv_post_sak: &ArkivSakArkivering,
-    ) -> Result<ArkivSakArkivering> {
-        let mut headers = HeaderMap::new();
-        headers.insert(CONTENT_TYPE, "application/json".parse().unwrap());
-
-        let response = self
-            .api_client
-            .get_client()
-            .post(format!("{}/arkiv/sakMtEnhet", self.api_client.get_base_url()).as_str())
-            .bearer_auth(self.api_client.get_token())
-            .headers(headers)
-            .json(&arkiv_post_sak)
-            .send()
-            .await
-            .map_err(|e| ApiError::ClientError {
-                resource: "reqwest".to_string(),
-                error_message: e.to_string(),
-            })?;
-        info!("Response opprett_arkiv_sak_med_mt_enhet: {:?}", response);
-
-        let status = response.status();
-        let response_text = response.text().await.map_err(|e| ApiError::ClientError {
-            resource: "reqwest".to_string(),
-            error_message: e.to_string(),
-        })?;
-
-        if !status.is_success() {
-            return Err(ApiError::ClientError {
-                resource: "Arkiv".to_string(),
-                error_message: format!(
-                    "Failed to create arkiv sak, HTTP Status: {status}, response {response_text}"
-                ),
-            });
-        }
-        let archive_response: ArkivSakArkivering = serde_json::from_str(&response_text)
-            .map_err(|e| ApiError::ParseError(e.to_string()))?;
-        Ok(archive_response)
-    }
-
-    #[tracing::instrument(
         name = "Legger til journalpost på sak",
         skip(self),
         fields(request_id = %Uuid::new_v4(), journalpost = %journalpost)
