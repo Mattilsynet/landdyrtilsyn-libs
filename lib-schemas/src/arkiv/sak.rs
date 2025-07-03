@@ -4,6 +4,7 @@ use crate::arkiv::tilgangskoder::Tilgangskode;
 use crate::error::Result;
 use crate::error::SchemasError;
 use serde::{Deserialize, Serialize};
+use crate::arkiv::Saksaar;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NySak {
@@ -29,4 +30,17 @@ impl NySak {
 
         Ok(())
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Sak {
+    pub saksnummer: String,
+    pub saksaar: Saksaar,
+    pub tittel: SaksTittel,
+    pub status: String,
+    pub enhet_id: String,
+    pub saksbehandler_id: Option<String>,
+    pub skjermingshjemmel: Option<String>,
+    pub tilgangskode: Option<String>,
+    pub lukket: bool,
 }

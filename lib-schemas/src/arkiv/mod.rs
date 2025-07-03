@@ -88,6 +88,12 @@ const SAKSTITTEL_MAX_LENGTH: usize = 256;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SaksTittel(pub String);
 
+impl SaksTittel {
+    pub fn uo_tittel(&self) -> SaksTittel {
+        SaksTittel("*****".to_string())
+    }
+}
+
 #[derive(Debug)]
 pub enum SaksTittelError {
     Empty,

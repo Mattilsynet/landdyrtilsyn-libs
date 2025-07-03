@@ -1,5 +1,7 @@
+use crate::arkiv::{add_jens_suffix, remove_jens_suffix};
 use core::fmt;
 use lib_schemas::arkiv::{Landkode, SaksTittel, Saksaar, sak::NySak};
+use lib_schemas::sak::Sak;
 use lib_schemas::{Tilgangshjemmel, Tilgangskode};
 use serde::{Deserialize, Deserializer, Serialize};
 
@@ -25,11 +27,11 @@ pub struct ArkivClientSak {
 
     pub tilgangskode: Option<Kodeverk>,
 
-    pub status: Option<Kodeverk>,
+    pub status: Kodeverk,
 
     pub lukket: bool,
     #[serde(rename = "enhetId")]
-    pub enhet_id: Option<String>,
+    pub enhet_id: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -204,7 +206,7 @@ pub struct ArkivSakArkivering {
 
     /// Hjemmel for at saken skal være unntatt fra offentigheten. Kode fra kodeverk TILGANGSHJEMMEL.
     /// Skal være på format kodetype$kode
-    #[serde(rename = "tilgangshjemmel", skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "tilgangshjemmel", alias="skjermingshjemmel", skip_serializing_if = "Option::is_none")]
     pub skjermingshjemmel: Option<Kodeverk>,
 
     /// Tilgangskode fra kodeverk TILGANGSKODE. Skal være på format kodetype$kode
@@ -212,7 +214,7 @@ pub struct ArkivSakArkivering {
     pub tilgangskode: Option<Kodeverk>,
 
     /// Status på saken
-    #[serde(rename = "saksstatus", skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "saksstatus", alias = "status", skip_serializing_if = "Option::is_none")]
     pub status: Option<Kodeverk>,
 
     /// Status om at saken er lukket
@@ -225,12 +227,11 @@ pub struct ArkivSakArkivering {
 
 impl From<NySak> for ArkivSakArkivering {
     fn from(value: NySak) -> Self {
-        // Tilpass felter etter behov
         ArkivSakArkivering {
             noarkaar: None,
             noarksaksnummer: None,
             saksbehandler_id: value.saksbehandler_id,
-            mt_enhet: value.mt_enhet,
+            mt_enhet: value.mt_enhet.as_ref().map(|s| add_jens_suffix(s.clone())),
             ordningsverdi: value.ordningsverdi,
             tittel: value.tittel,
             skjermingshjemmel: value.skjermingshjemmel.map(|v| v.into()),
@@ -238,6 +239,37 @@ impl From<NySak> for ArkivSakArkivering {
             status: None,
             lukket: false,
             virksomhetsmappe_id: None,
+        }
+    }
+}
+
+impl From<ArkivSakArkivering> for Sak {
+    fn from(value: ArkivSakArkivering) -> Self {
+        Sak {
+            saksnummer: value.noarksaksnummer.unwrap(),
+            saksaar: value.noarkaar.unwrap(),
+            tittel: if value.tilgangskode.as_ref().map(|k| k.id.as_str()) == Some("UO") {
+                value.tittel.uo_tittel()
+            } else {
+                value.tittel.clone()
+            },
+            enhet_id: remove_jens_suffix(value.mt_enhet.unwrap()),
+            status: value
+                .status
+                .as_ref()
+                .and_then(|kodeverk| kodeverk.id.split('$').next_back().map(str::to_string))
+                .expect(format!("Fant ikke statuskode i kodeverket {:?}", value.status).as_str()),
+            saksbehandler_id: value
+                .saksbehandler_id
+                .as_ref()
+                .map(|id| remove_jens_suffix(id.clone())),
+            skjermingshjemmel: value
+                .skjermingshjemmel
+                .map(|kodeverk| kodeverk.id.split('$').next_back().unwrap().to_string()),
+            tilgangskode: value
+                .tilgangskode
+                .map(|kodeverk| kodeverk.id.split('$').next_back().unwrap().to_string()),
+            lukket: value.lukket,
         }
     }
 }
