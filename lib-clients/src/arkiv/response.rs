@@ -206,7 +206,11 @@ pub struct ArkivSakArkivering {
 
     /// Hjemmel for at saken skal være unntatt fra offentigheten. Kode fra kodeverk TILGANGSHJEMMEL.
     /// Skal være på format kodetype$kode
-    #[serde(rename = "tilgangshjemmel", alias="skjermingshjemmel", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "tilgangshjemmel",
+        alias = "skjermingshjemmel",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub skjermingshjemmel: Option<Kodeverk>,
 
     /// Tilgangskode fra kodeverk TILGANGSKODE. Skal være på format kodetype$kode
@@ -214,7 +218,11 @@ pub struct ArkivSakArkivering {
     pub tilgangskode: Option<Kodeverk>,
 
     /// Status på saken
-    #[serde(rename = "saksstatus", alias = "status", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "saksstatus",
+        alias = "status",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub status: Option<Kodeverk>,
 
     /// Status om at saken er lukket
@@ -258,7 +266,7 @@ impl From<ArkivSakArkivering> for Sak {
                 .status
                 .as_ref()
                 .and_then(|kodeverk| kodeverk.id.split('$').next_back().map(str::to_string))
-                .expect(format!("Fant ikke statuskode i kodeverket {:?}", value.status).as_str()),
+                .unwrap_or_else(|| panic!("Fant ikke statuskode i kodeverket {:?}", value.status)),
             saksbehandler_id: value
                 .saksbehandler_id
                 .as_ref()
