@@ -1,10 +1,10 @@
 use crate::arkiv::SaksTittel;
+use crate::arkiv::Saksaar;
 use crate::arkiv::tilgangshjemmel::Tilgangshjemmel;
 use crate::arkiv::tilgangskoder::Tilgangskode;
 use crate::error::Result;
 use crate::error::SchemasError;
 use serde::{Deserialize, Serialize};
-use crate::arkiv::Saksaar;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NySak {
