@@ -37,7 +37,7 @@ impl DokumentGeneratorClient {
         let response = self
             .api_client
             .get_client()
-            .post(format!("{}/v1/interntdokument", &self.api_client.get_base_url()).as_str())
+            .post(format!("{}/v2/interntdokument", &self.api_client.get_base_url()).as_str())
             .headers(headers)
             .bearer_auth(self.api_client.get_token())
             .body(json_body)
