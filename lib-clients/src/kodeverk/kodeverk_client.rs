@@ -9,6 +9,7 @@ use tracing::debug;
 use tracing::instrument;
 use uuid::Uuid;
 
+#[derive(Clone)]
 pub struct KodeverkClient {
     api_client: ApiClient,
 }
