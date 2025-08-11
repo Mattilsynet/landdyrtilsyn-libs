@@ -1,12 +1,9 @@
 use std::env::VarError;
 
 use async_nats::{
-    ConnectErrorKind,
     jetstream::{
-        consumer::pull::BatchErrorKind,
-        context::{CreateKeyValueErrorKind, GetStreamErrorKind},
-        stream::ConsumerErrorKind,
-    },
+        consumer::pull::BatchErrorKind, context::{CreateKeyValueErrorKind, GetStreamErrorKind, KeyValueErrorKind}, kv::{EntryErrorKind, PutErrorKind}, stream::ConsumerErrorKind
+    }, ConnectErrorKind
 };
 
 pub type Result<T> = core::result::Result<T, Error>;
@@ -48,6 +45,18 @@ impl From<async_nats::error::Error<async_nats::jetstream::context::CreateStreamE
     }
 }
 
+impl From<async_nats::error::Error<KeyValueErrorKind>> for Error {
+    fn from(value: async_nats::error::Error<KeyValueErrorKind>) -> Self {
+        Self::FetchError(value.to_string())
+    }
+}
+
+impl From<async_nats::error::Error<EntryErrorKind>> for Error {
+    fn from(value: async_nats::error::Error<EntryErrorKind>) -> Self {
+        Self::FetchError(value.to_string())
+    }
+}
+
 impl From<async_nats::error::Error<CreateKeyValueErrorKind>> for Error {
     fn from(value: async_nats::error::Error<CreateKeyValueErrorKind>) -> Self {
         Self::ConfigError(value.to_string())
@@ -86,6 +95,12 @@ impl From<async_nats::error::Error<BatchErrorKind>> for Error {
 
 impl From<async_nats::error::Error<async_nats::client::PublishErrorKind>> for Error {
     fn from(value: async_nats::error::Error<async_nats::client::PublishErrorKind>) -> Self {
+        Self::PublishError(value.to_string())
+    }
+}
+
+impl From<async_nats::error::Error<PutErrorKind>> for Error {
+fn from(value: async_nats::error::Error<PutErrorKind>) -> Self {
         Self::PublishError(value.to_string())
     }
 }
