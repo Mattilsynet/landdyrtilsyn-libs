@@ -1,9 +1,13 @@
 use std::env::VarError;
 
 use async_nats::{
+    ConnectErrorKind,
     jetstream::{
-        consumer::pull::BatchErrorKind, context::{CreateKeyValueErrorKind, GetStreamErrorKind, KeyValueErrorKind}, kv::{EntryErrorKind, PutErrorKind}, stream::ConsumerErrorKind
-    }, ConnectErrorKind
+        consumer::pull::BatchErrorKind,
+        context::{CreateKeyValueErrorKind, GetStreamErrorKind, KeyValueErrorKind},
+        kv::{EntryErrorKind, PutErrorKind},
+        stream::ConsumerErrorKind,
+    },
 };
 
 pub type Result<T> = core::result::Result<T, Error>;
@@ -100,7 +104,7 @@ impl From<async_nats::error::Error<async_nats::client::PublishErrorKind>> for Er
 }
 
 impl From<async_nats::error::Error<PutErrorKind>> for Error {
-fn from(value: async_nats::error::Error<PutErrorKind>) -> Self {
+    fn from(value: async_nats::error::Error<PutErrorKind>) -> Self {
         Self::PublishError(value.to_string())
     }
 }
