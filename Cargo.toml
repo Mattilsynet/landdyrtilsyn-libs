@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [workspace]
-members = ["lib-keycloak-client", "lib-auth", "lib-google-cloud-storage", "lib-sql", "lib-nats", "lib-clients", "lib-schemas", "lib-slack-notifier"]
+members = ["lib-keycloak-client", "lib-auth", "lib-google-cloud-storage", "lib-sql", "lib-nats", "lib-clients", "lib-schemas", "lib-slack-notifier", "lib-entra"]
 
 [workspace.dependencies]
 serde = { version = "1.0.219", features = ["derive"] }
@@ -19,3 +19,5 @@ reqwest-middleware = { version = "0.4.2", features = ["json", "rustls-tls"] }
 
 chrono = { version = "0.4.41", features = ["serde"] }
 uuid = { version = "1.17.0", features = ["v4"] }
+
+tokio = { version = "1.45.1", features = ["rt-multi-thread", "macros"] }
