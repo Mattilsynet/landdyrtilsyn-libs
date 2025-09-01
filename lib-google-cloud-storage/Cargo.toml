@@ -5,5 +5,5 @@ edition = "2024"
 
 [dependencies]
 tracing = { workspace = true }
-google-cloud-storage = "0.24.0"
+google-cloud-storage = "0.25.0"
 
