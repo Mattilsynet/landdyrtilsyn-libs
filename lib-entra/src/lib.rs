@@ -1,6 +1,7 @@
 use reqwest::StatusCode;
 use serde::Deserialize;
 use serde_json;
+use tracing::{self, instrument};
 
 #[derive(Debug, thiserror::Error)]
 pub enum EntraError {
@@ -38,7 +39,7 @@ pub struct GraphUser {
     #[serde(rename = "employeeId")]
     pub employeeid: Option<String>,
 }
-
+#[instrument(name = "Henter brukerprofil fra graphAPIet" skip(token), level = "info")]
 async fn get_user_profile(token: &str) -> Result<GraphUser> {
     let client = reqwest::Client::new();
     let resp = client
@@ -46,13 +47,18 @@ async fn get_user_profile(token: &str) -> Result<GraphUser> {
         .bearer_auth(token)
         .send()
         .await
-        .map_err(|e| EntraError::Network(e.to_string()))?;
+        .map_err(|e| { 
+            tracing::error!("Klarte ikke hente data fra graph API: {}", e.to_string());
+            EntraError::Network(e.to_string())})?;
 
     let status = resp.status();
     let body = resp
         .text()
         .await
-        .map_err(|e| EntraError::Network(e.to_string()))?;
+        .map_err(|e| {
+             tracing::error!("Klarte ikke lese body: {}", e.to_string());
+             EntraError::Network(e.to_string())
+            })?;
 
     match status {
         StatusCode::OK => serde_json::from_str::<GraphUser>(&body)
@@ -96,9 +102,13 @@ struct OboTokenResponse {
 }
 
 // EntraID on-behalf-of exchange: Bytter frontend user token (hvor aud er API scope) til graphAPI access token.
+#[instrument(name="OBO exchange av brukertoken mot graphAPI token", skip(user_token), level = "info")]
 pub async fn exchange_for_graph_token_obo(user_token: &str) -> Result<String> {
     let cfg = OboConfig::from_env()?;
 
+    tracing::info!(
+        "Starter flyt for on-behalf-of exchange av frontend access token mot graphAPI access token"
+    );
     let scope_param = "https://graph.microsoft.com/User.Read";
     let url = format!(
         "https://login.microsoftonline.com/{}/oauth2/v2.0/token",
@@ -120,15 +130,18 @@ pub async fn exchange_for_graph_token_obo(user_token: &str) -> Result<String> {
         .await
         .map_err(|e| EntraError::Network(e.to_string()))?;
     let status = resp.status();
-    let body = resp
-        .text()
-        .await
-        .map_err(|e| EntraError::Network(e.to_string()))?;
+    let body = resp.text().await.map_err(|e| {
+        tracing::error!("Klarte ikke lese response body: {}", e);
+        EntraError::Network(e.to_string())
+    })?;
     if !status.is_success() {
+        tracing::error!("On-behalf-off exchange feilet: status {}: {}", status, body);
         return Err(EntraError::Obo(format!("status {status}: {body}")));
     }
-    let parsed: OboTokenResponse =
-        serde_json::from_str(&body).map_err(|e| EntraError::Deserialize(e.to_string()))?;
+    let parsed: OboTokenResponse = serde_json::from_str(&body).map_err(|e| {
+        tracing::error!("Klarte ikke parse on-behalf-of token response");
+        return EntraError::Deserialize(e.to_string());
+    })?;
     Ok(parsed.access_token)
 }
 
