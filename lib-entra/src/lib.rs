@@ -1,6 +1,5 @@
 use reqwest::StatusCode;
 use serde::Deserialize;
-use serde_json;
 use tracing::{self, instrument};
 
 #[derive(Debug, thiserror::Error)]
@@ -47,18 +46,15 @@ async fn get_user_profile(token: &str) -> Result<GraphUser> {
         .bearer_auth(token)
         .send()
         .await
-        .map_err(|e| { 
+        .map_err(|e| {
             tracing::error!("Klarte ikke hente data fra graph API: {}", e.to_string());
             EntraError::Network(e.to_string())})?;
 
     let status = resp.status();
-    let body = resp
-        .text()
-        .await
-        .map_err(|e| {
-             tracing::error!("Klarte ikke lese body: {}", e.to_string());
-             EntraError::Network(e.to_string())
-            })?;
+    let body = resp.text().await.map_err(|e| {
+        tracing::error!("Klarte ikke lese body: {}", e.to_string());
+        EntraError::Network(e.to_string())
+    })?;
 
     match status {
         StatusCode::OK => serde_json::from_str::<GraphUser>(&body)
@@ -102,7 +98,11 @@ struct OboTokenResponse {
 }
 
 // EntraID on-behalf-of exchange: Bytter frontend user token (hvor aud er API scope) til graphAPI access token.
-#[instrument(name="OBO exchange av brukertoken mot graphAPI token", skip(user_token), level = "info")]
+#[instrument(
+    name = "OBO exchange av brukertoken mot graphAPI token",
+    skip(user_token),
+    level = "info"
+)]
 pub async fn exchange_for_graph_token_obo(user_token: &str) -> Result<String> {
     let cfg = OboConfig::from_env()?;
 
@@ -140,7 +140,7 @@ pub async fn exchange_for_graph_token_obo(user_token: &str) -> Result<String> {
     }
     let parsed: OboTokenResponse = serde_json::from_str(&body).map_err(|e| {
         tracing::error!("Klarte ikke parse on-behalf-of token response");
-        return EntraError::Deserialize(e.to_string());
+        EntraError::Deserialize(e.to_string())
     })?;
     Ok(parsed.access_token)
 }

@@ -182,10 +182,10 @@ pub mod date_format {
                 }
 
                 // Hvis det feiler, prøv dato format
-                if let Ok(d) = chrono::NaiveDate::parse_from_str(&s, FORMAT_DATE) {
-                    if let Some(dt) = d.and_hms_opt(0, 0, 0) {
-                        return Ok(Some(Utc.from_utc_datetime(&dt)));
-                    }
+                if let Ok(d) = chrono::NaiveDate::parse_from_str(&s, FORMAT_DATE)
+                    && let Some(dt) = d.and_hms_opt(0, 0, 0)
+                {
+                    return Ok(Some(Utc.from_utc_datetime(&dt)));
                 }
 
                 Err(serde::de::Error::custom(format!(

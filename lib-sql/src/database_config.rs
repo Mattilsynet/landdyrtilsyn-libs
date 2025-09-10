@@ -1,11 +1,18 @@
+//! Konfigurasjon og oppsett av databaseforbindelse (connection pool).
+//!
+//! Leser nødvendige miljøvariabler og oppretter en gjenbruksbar `sqlx::Pool<Postgres)`
+//! som kan injiseres i andre deler av systemet.
+
 use secrecy::ExposeSecret;
 use secrecy::SecretString;
-use sqlx::{
-    Pool, Postgres,
-    postgres::{PgConnectOptions, PgPoolOptions},
-};
+use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
+use sqlx::{Pool, Postgres};
 use std::env;
 
+/// Typealias for prosjektets database-pool.
+///
+/// Bruk denne for å dele pool mellom kall/funksjoner i biblioteket og
+/// nedstrøms applikasjoner.
 pub type DbPool = Pool<Postgres>;
 
 struct DatabaseSettings {
@@ -40,6 +47,34 @@ impl DatabaseSettings {
     }
 }
 
+/// Oppretter og returnerer en databaseforbindelses-pool.
+///
+/// Leser nødvendige miljøvariabler:
+/// - `DATABASE_USER`
+/// - `DATABASE_PASSWORD`
+/// - `DATABASE_HOST`
+/// - `DATABASE_PORT`
+/// - `DATABASE_NAME`
+///
+/// # Panics
+/// Denne funksjonen kan panikke dersom en eller flere av miljøvariablene over
+/// ikke er satt. Det skyldes eksplisitte `expect(...)`-kall ved uthenting av
+/// variablene.
+///
+/// # Errors
+/// Returnerer `sqlx::Error` dersom opprettelse av pool feiler, for eksempel ved
+/// ugyldig tilkoblingsstreng, nettverksfeil eller avvist tilkobling fra databasen.
+///
+/// # Examples
+/// ```rust
+/// # async fn example() -> Result<(), sqlx::Error> {
+/// use lib_sql::database_config::get_database_pool;
+///
+/// let pool = get_database_pool().await?;
+/// // Bruk `pool`
+/// # Ok(())
+/// # }
+/// ```
 pub async fn get_database_pool() -> Result<DbPool, sqlx::Error> {
     let env = env::var("APP_APPLICATION__ENVIRONMENT").unwrap_or_else(|_| "local".into());
     let username = env::var("DATABASE_USER").expect("DATABASE_USER must be set");

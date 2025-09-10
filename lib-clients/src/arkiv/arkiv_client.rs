@@ -5,7 +5,7 @@ use crate::arkiv::response::{
 use crate::client::ApiClient;
 use crate::error::ApiError;
 use crate::error::Result;
-use lib_schemas::sak::{NySak, Sak};
+use lib_schemas::arkiv::sak::{NySak, Sak};
 use reqwest::header::{ACCEPT, CONTENT_TYPE, HeaderMap};
 use serde::Deserialize;
 use tracing::{error, info};

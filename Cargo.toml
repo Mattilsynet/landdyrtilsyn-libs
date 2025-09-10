@@ -8,16 +8,16 @@ members = ["lib-keycloak-client", "lib-auth", "lib-google-cloud-storage", "lib-s
 
 [workspace.dependencies]
 serde = { version = "1.0.219", features = ["derive"] }
-serde_json = "1.0.140"
+serde_json = "1.0.143"
 secrecy = "0.10.3"
 tracing = "0.1.41"
-thiserror = "2.0.12"
+thiserror = "2.0.16"
 
-reqwest = { version = "0.12.20", features = ["json", "rustls-tls"]}
+reqwest = { version = "0.12.23", features = ["json", "rustls-tls"]}
 reqwest-retry = "0.7.0"
 reqwest-middleware = { version = "0.4.2", features = ["json", "rustls-tls"] }
 
-chrono = { version = "0.4.41", features = ["serde"] }
-uuid = { version = "1.17.0", features = ["v4"] }
+chrono = { version = "0.4.42", features = ["serde"] }
+uuid = { version = "1.18.1", features = ["v4"] }
 
-tokio = { version = "1.45.1", features = ["rt-multi-thread", "macros"] }
+tokio = { version = "1.47.1", features = ["rt-multi-thread", "macros"] }
