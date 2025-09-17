@@ -1,6 +1,8 @@
 use crate::arkiv::response::Kodeverk;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use thiserror::Error;
+use reqwest_middleware::reqwest::StatusCode;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(deserialize = "camelCase", serialize = "camelCase"))]
@@ -68,3 +70,16 @@ impl Code {
         }
     }
 }
+
+#[derive(Debug, Error)]
+pub enum KodeverkError {
+    #[error("http status {status}: {body}")]
+    Http { status: StatusCode, body: String },
+    #[error("parse error: {0}")]
+    Parse(String),
+    #[error("client error: {0}")]
+    Client(String),
+}
+
+pub type KodeverkResult<T> = std::result::Result<T, KodeverkError>;
+

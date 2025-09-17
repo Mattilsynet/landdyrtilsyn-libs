@@ -1,8 +1,6 @@
 use crate::arkiv::response::Kodeverk;
 use crate::client::ApiClient;
-use crate::error::ApiError;
-use crate::error::Result;
-use crate::kodeverk::response::{Code, KodeverkResponse};
+use crate::kodeverk::response::{Code, KodeverkResponse, KodeverkError, KodeverkResult};
 use reqwest_middleware::reqwest::header::{ACCEPT, HeaderMap, HeaderValue};
 use serde::{Deserialize, Serialize};
 use tracing::debug;
@@ -40,7 +38,7 @@ impl KodeverkClient {
         realtion_name: &str,
         kodetype: &str,
         kodenavn: &str,
-    ) -> Result<String> {
+    ) -> KodeverkResult<String> {
         let mut headers = HeaderMap::new();
         headers.insert(ACCEPT, HeaderValue::from_static("application/json"));
 
@@ -54,7 +52,7 @@ impl KodeverkClient {
         debug!("url : {}", url);
 
         let client = self.api_client.get_client();
-        let token = self.api_client.get_token();
+        let token = self.api_client.get_token().await;
 
         let response = client
             .get(&url)
@@ -62,45 +60,32 @@ impl KodeverkClient {
             .headers(headers)
             .send()
             .await
-            .map_err(|e| ApiError::ClientError {
-                resource: "reqwest".to_string(),
-                error_message: e.to_string(),
-            })?;
+            .map_err(|e| KodeverkError::Client(e.to_string()))?;
 
         let status = response.status();
-        let response_text = response.text().await.map_err(|e| ApiError::ClientError {
-            resource: "reqwest".to_string(),
-            error_message: e.to_string(),
-        })?;
+        let response_text = response
+            .text()
+            .await
+            .map_err(|e| KodeverkError::Client(e.to_string()))?;
         if !status.is_success() {
-            return Err(ApiError::ClientError {
-                resource: "org_enhet".to_string(),
-                error_message: format!(
-                    "Failed to get kodeverk relation, HTTP Status: {status}, response {response_text}"
-                ),
-            });
+            return Err(KodeverkError::Http { status, body: response_text });
         }
         debug!("response_text : {}", response_text);
 
         let kodeverk_response: KodeverkResponse = serde_json::from_str(&response_text)
-            .map_err(|e| ApiError::ParseError(e.to_string()))?;
+            .map_err(|e| KodeverkError::Parse(e.to_string()))?;
 
         debug!(
             "kodeverk_response : {:?}",
             kodeverk_response._embedded.related_code_list
         );
 
-        let related_code_list_string =
-            serde_json::to_string_pretty(&kodeverk_response).map_err(|e| {
-                ApiError::ClientError {
-                    resource: "serde".to_string(),
-                    error_message: e.to_string(),
-                }
-            })?;
+        let related_code_list_string = serde_json::to_string_pretty(&kodeverk_response)
+            .map_err(|e| KodeverkError::Client(e.to_string()))?;
 
         Ok(related_code_list_string)
     }
-    pub async fn get_code(&self, code_type: &str, params: &CodeParams) -> Result<Kodeverk> {
+    pub async fn get_code(&self, code_type: &str, params: &CodeParams) -> KodeverkResult<Kodeverk> {
         let mut url = format!(
             "{}/kodeverk/code/{}",
             self.api_client.get_base_url(),
@@ -123,25 +108,24 @@ impl KodeverkClient {
             url.push_str(&query_parts.join("&"));
         }
 
-        let response = self.api_client.api_get(&url).await?;
+        let response = self
+            .api_client
+            .api_get(&url)
+            .await
+            .map_err(|e| KodeverkError::Client(e.to_string()))?;
 
         let status = response.status();
-        let response_text = response.text().await.map_err(|e| ApiError::ClientError {
-            resource: "reqwest".to_string(),
-            error_message: e.to_string(),
-        })?;
+        let response_text = response
+            .text()
+            .await
+            .map_err(|e| KodeverkError::Client(e.to_string()))?;
         if !status.is_success() {
-            return Err(ApiError::ClientError {
-                resource: "org_enhet".to_string(),
-                error_message: format!(
-                    "Failed to get kodeverk relation, HTTP Status: {status}, response {response_text}"
-                ),
-            });
+            return Err(KodeverkError::Http { status, body: response_text });
         }
 
         debug!("response_text : {}", response_text);
         let kodeverk_response: Code = serde_json::from_str(&response_text)
-            .map_err(|e| ApiError::ParseError(e.to_string()))?;
+            .map_err(|e| KodeverkError::Parse(e.to_string()))?;
 
         Ok(kodeverk_response.to_kodeverk())
     }
