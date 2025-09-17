@@ -7,11 +7,75 @@ use reqwest_middleware::{ClientBuilder as MiddlewareClientBuilder, ClientWithMid
 use reqwest_retry::{RetryTransientMiddleware, policies::ExponentialBackoff};
 use secrecy::ExposeSecret;
 use std::env;
+use std::sync::Arc;
+use tokio::sync::{Mutex, RwLock};
+use std::time::{Instant, Duration};
+
+pub struct Token {
+    value: String,
+    expires_at: Instant,
+}
+
+pub struct TokenProvider {
+    current_token: RwLock<Token>,
+    refresh_lock: Mutex<()>,
+    client_id: String,
+    client_secret: String,
+    auth_url: String,
+}
+
+impl TokenProvider {
+    async fn new(client_id: String, client_secret: String, auth_url: String) -> Self {
+        let (value, expires_at) = Self::fetch_new_token(&client_id, &client_secret, &auth_url).await;
+        Self {
+            current_token: RwLock::new(Token { value, expires_at }),
+            refresh_lock: Mutex::new(()),
+            client_id,
+            client_secret,
+            auth_url,
+        }
+    }
+
+    async fn get(&self) -> String {
+        {
+            let token = self.current_token.read().await;
+            if token.expires_at > Instant::now() {
+                return token.value.clone();
+            }
+        }
+
+        let _guard = self.refresh_lock.lock().await;
+
+        {
+            let token = self.current_token.read().await;
+            if token.expires_at > Instant::now() {
+                return token.value.clone();
+            }
+        }
+
+        let (value, expires_at) = Self::fetch_new_token(&self.client_id, &self.client_secret, &self.auth_url).await;
+        {
+            let mut token = self.current_token.write().await;
+            token.value = value.clone();
+            token.expires_at = expires_at;
+        }
+        value
+    }
+
+    async fn fetch_new_token(client_id: &str, client_secret: &str, auth_url: &str) -> (String, Instant) {
+        let value = get_keycloak_token(client_id, client_secret, auth_url)
+            .await
+            .unwrap_or_else(|e| ApiError::TokenError(e.to_string()).to_string());
+
+        let expires_at = Instant::now() + Duration::from_secs(300);
+        (value, expires_at)
+    }
+}
 
 #[derive(Clone)]
 pub struct ApiClient {
     client: ClientWithMiddleware,
-    token: String,
+    token_provider: Arc<TokenProvider>,
     base_url: String,
 }
 
@@ -23,19 +87,20 @@ impl ApiClient {
         let client_config = ClientConfiguration::build(auth_config_prefix)
             .await
             .expect("Failed to build client configuration");
-        let token = get_keycloak_token(
-            client_config.client_id.expose_secret(),
-            client_config.client_secret.expose_secret(),
-            client_config.auth_url.as_str(),
-        )
-        .await
-        .unwrap_or_else(|e| ApiError::TokenError(e.to_string()).to_string());
+
+        let token_provider = Arc::new(
+            TokenProvider::new(
+                client_config.client_id.expose_secret().to_string(),
+                client_config.client_secret.expose_secret().to_string(),
+                client_config.auth_url.clone(),
+            ).await
+        );
 
         let client = Client::new();
 
         ApiClient {
             client: ClientWithMiddleware::new(client, vec![]),
-            token,
+            token_provider,
             base_url,
         }
     }
@@ -44,8 +109,8 @@ impl ApiClient {
         &self.client
     }
 
-    pub fn get_token(&self) -> &str {
-        &self.token
+    pub async fn get_token(&self) -> String {
+        self.token_provider.get().await
     }
 
     pub fn get_base_url(&self) -> &str {
@@ -62,6 +127,7 @@ impl ApiClient {
     }
 
     pub async fn api_get(&self, url: &String) -> crate::error::Result<Response> {
+        let token = self.token_provider.get().await;
         let response = self
             .get_client()
             .get(url)
@@ -69,7 +135,7 @@ impl ApiClient {
                 reqwest::header::CONTENT_TYPE.to_string(),
                 "application/json",
             )
-            .bearer_auth(self.get_token())
+            .bearer_auth(token)
             .send()
             .await
             .map_err(|e| ApiError::ClientError {
@@ -79,3 +145,4 @@ impl ApiClient {
         Ok(response)
     }
 }
+
