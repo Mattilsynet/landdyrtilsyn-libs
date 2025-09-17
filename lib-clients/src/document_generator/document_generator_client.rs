@@ -39,7 +39,7 @@ impl DokumentGeneratorClient {
             .get_client()
             .post(format!("{}/v2/interntdokument", &self.api_client.get_base_url()).as_str())
             .headers(headers)
-            .bearer_auth(self.api_client.get_token())
+            .bearer_auth(self.api_client.get_token().await)
             .body(json_body)
             .send()
             .await
@@ -85,7 +85,7 @@ impl DokumentGeneratorClient {
             .get_client()
             .post(format!("{}/v1/vedlegg", &self.api_client.get_base_url()).as_str())
             .headers(headers)
-            .bearer_auth(self.api_client.get_token())
+            .bearer_auth(self.api_client.get_token().await)
             .body(json_body)
             .send()
             .await

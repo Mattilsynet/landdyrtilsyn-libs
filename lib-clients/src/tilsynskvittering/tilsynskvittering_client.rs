@@ -44,7 +44,7 @@ impl TilsynskvitteringClient {
             .api_client
             .get_client()
             .post(url)
-            .bearer_auth(self.api_client.get_token())
+            .bearer_auth(self.api_client.get_token().await)
             .headers(headers)
             .json(&tilsynsobjekt_ids)
             .send()

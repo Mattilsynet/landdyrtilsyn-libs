@@ -151,7 +151,7 @@ impl ArkivClient {
             .api_client
             .get_client()
             .post(format!("{}/arkiv/sakMtEnhet", self.api_client.get_base_url()).as_str())
-            .bearer_auth(self.api_client.get_token())
+            .bearer_auth(self.api_client.get_token().await)
             .headers(headers)
             .json(&ArkivSakArkivering::from(sak))
             .send()
@@ -197,7 +197,7 @@ impl ArkivClient {
             .api_client
             .get_client()
             .post(format!("{}/arkiv/fil", self.api_client.get_base_url()).as_str())
-            .bearer_auth(self.api_client.get_token())
+            .bearer_auth(self.api_client.get_token().await)
             .headers(headers)
             .json(&journalpost)
             .send()
@@ -243,7 +243,7 @@ impl ArkivClient {
             .api_client
             .get_client()
             .post(format!("{}/arkiv/filArkivBruker", self.api_client.get_base_url()).as_str())
-            .bearer_auth(self.api_client.get_token())
+            .bearer_auth(self.api_client.get_token().await)
             .headers(headers)
             .json(&journalpost)
             .send()
@@ -300,7 +300,7 @@ impl ArkivClient {
                 )
                 .as_str(),
             )
-            .bearer_auth(self.api_client.get_token())
+            .bearer_auth(self.api_client.get_token().await)
             .json(vedlegg)
             .send()
             .await
@@ -359,7 +359,7 @@ impl ArkivClient {
                 )
                 .as_str(),
             )
-            .bearer_auth(self.api_client.get_token())
+            .bearer_auth(self.api_client.get_token().await)
             .json(status)
             .send()
             .await
@@ -414,7 +414,7 @@ impl ArkivClient {
                 )
                 .as_str(),
             )
-            .bearer_auth(self.api_client.get_token())
+            .bearer_auth(self.api_client.get_token().await)
             .json(ansvarlig)
             .send()
             .await
@@ -472,7 +472,7 @@ impl ArkivClient {
                 )
                 .as_str(),
             )
-            .bearer_auth(self.api_client.get_token())
+            .bearer_auth(self.api_client.get_token().await)
             .json(status)
             .send()
             .await
@@ -528,7 +528,7 @@ impl ArkivClient {
                 .as_str(),
             )
             .header("Content-Length", "0") //Trengs for og unngå 411 Length Required
-            .bearer_auth(self.api_client.get_token())
+            .bearer_auth(self.api_client.get_token().await)
             .send()
             .await
             .map_err(|e| ApiError::ClientError {

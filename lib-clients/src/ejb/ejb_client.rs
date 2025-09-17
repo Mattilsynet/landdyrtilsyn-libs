@@ -56,7 +56,7 @@ impl EjbClient {
             .api_client
             .get_client()
             .get(&url)
-            .bearer_auth(self.api_client.get_token())
+            .bearer_auth(self.api_client.get_token().await)
             .send()
             .await
             .map_err(|e| ApiError::ClientError {
@@ -130,7 +130,7 @@ impl EjbClient {
             .api_client
             .get_client()
             .get(&url)
-            .bearer_auth(self.api_client.get_token())
+            .bearer_auth(self.api_client.get_token().await)
             .send()
             .await
             .map_err(|e| ApiError::ClientError {
