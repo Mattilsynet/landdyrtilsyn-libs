@@ -8,14 +8,13 @@ use reqwest_retry::{RetryTransientMiddleware, policies::ExponentialBackoff};
 use secrecy::ExposeSecret;
 use std::env;
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 use tokio::sync::{Mutex, RwLock};
-use std::time::{Instant, Duration};
 
 pub struct Token {
     value: String,
     expires_at: Instant,
 }
-
 pub struct TokenProvider {
     current_token: RwLock<Token>,
     refresh_lock: Mutex<()>,
@@ -23,10 +22,10 @@ pub struct TokenProvider {
     client_secret: String,
     auth_url: String,
 }
-
 impl TokenProvider {
     async fn new(client_id: String, client_secret: String, auth_url: String) -> Self {
-        let (value, expires_at) = Self::fetch_new_token(&client_id, &client_secret, &auth_url).await;
+        let (value, expires_at) =
+            Self::fetch_new_token(&client_id, &client_secret, &auth_url).await;
         Self {
             current_token: RwLock::new(Token { value, expires_at }),
             refresh_lock: Mutex::new(()),
@@ -53,7 +52,8 @@ impl TokenProvider {
             }
         }
 
-        let (value, expires_at) = Self::fetch_new_token(&self.client_id, &self.client_secret, &self.auth_url).await;
+        let (value, expires_at) =
+            Self::fetch_new_token(&self.client_id, &self.client_secret, &self.auth_url).await;
         {
             let mut token = self.current_token.write().await;
             token.value = value.clone();
@@ -62,7 +62,11 @@ impl TokenProvider {
         value
     }
 
-    async fn fetch_new_token(client_id: &str, client_secret: &str, auth_url: &str) -> (String, Instant) {
+    async fn fetch_new_token(
+        client_id: &str,
+        client_secret: &str,
+        auth_url: &str,
+    ) -> (String, Instant) {
         let value = get_keycloak_token(client_id, client_secret, auth_url)
             .await
             .unwrap_or_else(|e| ApiError::TokenError(e.to_string()).to_string());
@@ -93,7 +97,8 @@ impl ApiClient {
                 client_config.client_id.expose_secret().to_string(),
                 client_config.client_secret.expose_secret().to_string(),
                 client_config.auth_url.clone(),
-            ).await
+            )
+            .await,
         );
 
         let client = Client::new();
@@ -145,4 +150,3 @@ impl ApiClient {
         Ok(response)
     }
 }
-

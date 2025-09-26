@@ -1,8 +1,8 @@
 use crate::arkiv::response::Kodeverk;
+use reqwest_middleware::reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use thiserror::Error;
-use reqwest_middleware::reqwest::StatusCode;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(deserialize = "camelCase", serialize = "camelCase"))]
@@ -82,4 +82,3 @@ pub enum KodeverkError {
 }
 
 pub type KodeverkResult<T> = std::result::Result<T, KodeverkError>;
-

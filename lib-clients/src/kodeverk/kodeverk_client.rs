@@ -1,6 +1,6 @@
 use crate::arkiv::response::Kodeverk;
 use crate::client::ApiClient;
-use crate::kodeverk::response::{Code, KodeverkResponse, KodeverkError, KodeverkResult};
+use crate::kodeverk::response::{Code, KodeverkError, KodeverkResponse, KodeverkResult};
 use reqwest_middleware::reqwest::header::{ACCEPT, HeaderMap, HeaderValue};
 use serde::{Deserialize, Serialize};
 use tracing::debug;
@@ -68,7 +68,10 @@ impl KodeverkClient {
             .await
             .map_err(|e| KodeverkError::Client(e.to_string()))?;
         if !status.is_success() {
-            return Err(KodeverkError::Http { status, body: response_text });
+            return Err(KodeverkError::Http {
+                status,
+                body: response_text,
+            });
         }
         debug!("response_text : {}", response_text);
 
@@ -120,7 +123,10 @@ impl KodeverkClient {
             .await
             .map_err(|e| KodeverkError::Client(e.to_string()))?;
         if !status.is_success() {
-            return Err(KodeverkError::Http { status, body: response_text });
+            return Err(KodeverkError::Http {
+                status,
+                body: response_text,
+            });
         }
 
         debug!("response_text : {}", response_text);
