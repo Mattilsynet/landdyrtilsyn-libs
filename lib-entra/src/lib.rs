@@ -1,5 +1,8 @@
 use reqwest::StatusCode;
-use serde::Deserialize;
+
+use serde::{Deserialize, Serialize};
+use serde_json;
+
 use tracing::{self, instrument};
 
 #[derive(Debug, thiserror::Error)]
@@ -22,6 +25,11 @@ pub enum EntraError {
 
 pub type Result<T> = core::result::Result<T, EntraError>;
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GraphUserMemberOf {
+    pub id: String,
+}
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct GraphUser {
     pub id: Option<String>,
@@ -37,18 +45,73 @@ pub struct GraphUser {
     pub job_title: Option<String>,
     #[serde(rename = "employeeId")]
     pub employeeid: Option<String>,
+    #[serde(rename = "memberOf")]
+    pub groups: Option<Vec<GraphUserMemberOf>>,
 }
-#[instrument(name = "Henter brukerprofil fra graphAPIet" skip(token), level = "info")]
-async fn get_user_profile(token: &str) -> Result<GraphUser> {
+
+#[derive(Deserialize)]
+struct MemberOfPage {
+    value: Vec<GraphUserMemberOf>,
+    #[serde(rename = "@odata.nextLink")]
+    next_link: Option<String>,
+}
+
+async fn fetch_member_of(token: &str) -> Result<Vec<GraphUserMemberOf>> {
     let client = reqwest::Client::new();
+    let mut url = "https://graph.microsoft.com/v1.0/me/memberOf?$select=id".to_string();
+    let mut all: Vec<GraphUserMemberOf> = Vec::new();
+
+    loop {
+        let resp = client
+            .get(&url)
+            .bearer_auth(token)
+            .send()
+            .await
+            .map_err(|e| EntraError::Network(e.to_string()))?;
+
+        let status = resp.status();
+        let body = resp
+            .text()
+            .await
+            .map_err(|e| EntraError::Network(e.to_string()))?;
+
+        if !status.is_success() {
+            return Err(EntraError::UnexpectedResponse { status, body });
+        }
+
+        let page: MemberOfPage =
+            serde_json::from_str(&body).map_err(|e| EntraError::Deserialize(e.to_string()))?;
+
+        all.extend(page.value.into_iter());
+
+        if let Some(next) = page.next_link {
+            url = next;
+        } else {
+            break;
+        }
+    }
+
+    Ok(all)
+}
+
+#[instrument(name = "Henter fra graphAPIet", skip(token), level = "info")]
+async fn get_user_profile(token: &str, include_groups: bool) -> Result<GraphUser> {
+    tracing::info!("Henter brukerinformasjon fra graphAPIet");
+
+    let client = reqwest::Client::new();
+
+    // Only user profile now
+    let url = "https://graph.microsoft.com/v1.0/me?$select=id,displayName,mail,userPrincipalName,givenName,surname,jobTitle,employeeId";
+
     let resp = client
-        .get("https://graph.microsoft.com/v1.0/me?$select=id,displayName,mail,userPrincipalName,givenName,surname,jobTitle,employeeId")
+        .get(url)
         .bearer_auth(token)
         .send()
         .await
         .map_err(|e| {
             tracing::error!("Klarte ikke hente data fra graph API: {}", e.to_string());
-            EntraError::Network(e.to_string())})?;
+            EntraError::Network(e.to_string())
+        })?;
 
     let status = resp.status();
     let body = resp.text().await.map_err(|e| {
@@ -56,16 +119,32 @@ async fn get_user_profile(token: &str) -> Result<GraphUser> {
         EntraError::Network(e.to_string())
     })?;
 
-    match status {
+    let mut user = match status {
         StatusCode::OK => serde_json::from_str::<GraphUser>(&body)
-            .map_err(|e| EntraError::Deserialize(e.to_string())),
-        StatusCode::UNAUTHORIZED => Err(EntraError::Unauthorized),
-        StatusCode::FORBIDDEN => Err(EntraError::Forbidden),
-        other => Err(EntraError::UnexpectedResponse {
-            status: other,
-            body,
-        }),
+            .map_err(|e| EntraError::Deserialize(e.to_string()))?,
+        StatusCode::UNAUTHORIZED => return Err(EntraError::Unauthorized),
+        StatusCode::FORBIDDEN => return Err(EntraError::Forbidden),
+        other => {
+            return Err(EntraError::UnexpectedResponse {
+                status: other,
+                body,
+            });
+        }
+    };
+
+    if include_groups {
+        tracing::info!("Inkluderer grupper (separate kall + paging)");
+        match fetch_member_of(token).await {
+            Ok(groups) => {
+                user.groups = Some(groups);
+            }
+            Err(e) => {
+                tracing::warn!("Klarte ikke hente grupper: {e}");
+            }
+        }
     }
+
+    Ok(user)
 }
 
 /// Configuration needed for On-Behalf-Of token exchange.
@@ -146,9 +225,9 @@ pub async fn exchange_for_graph_token_obo(user_token: &str) -> Result<String> {
 }
 
 // Fra frontend access token, utfør o-b-o og hent data fra graphAPI
-pub async fn get_user(user_token: &str) -> Result<GraphUser> {
+pub async fn get_user(user_token: &str, include_groups: bool) -> Result<GraphUser> {
     let graph_token = exchange_for_graph_token_obo(user_token).await?;
-    get_user_profile(&graph_token).await
+    get_user_profile(&graph_token, include_groups).await
 }
 
 #[cfg(test)]
@@ -158,7 +237,7 @@ mod tests {
     #[tokio::test]
     async fn invalid_token_results_in_error() {
         let token = "invalid.token";
-        let result = get_user_profile(token).await;
+        let result = get_user_profile(token, false).await;
         assert!(result.is_err());
     }
 }
