@@ -1,8 +1,9 @@
-use reqwest::StatusCode;
+use reqwest::{StatusCode, header};
 
 use serde::{Deserialize, Serialize};
 use serde_json;
 
+use base64::{Engine as _, engine::general_purpose};
 use tracing::{self, instrument};
 
 #[derive(Debug, thiserror::Error)]
@@ -47,6 +48,7 @@ pub struct GraphUser {
     pub employeeid: Option<String>,
     #[serde(rename = "memberOf")]
     pub groups: Option<Vec<GraphUserMemberOf>>,
+    pub photo: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -99,10 +101,7 @@ async fn get_user_profile(token: &str, include_groups: bool) -> Result<GraphUser
     tracing::info!("Henter brukerinformasjon fra graphAPIet");
 
     let client = reqwest::Client::new();
-
-    // Only user profile now
-    let url = "https://graph.microsoft.com/v1.0/me?$select=id,displayName,mail,userPrincipalName,givenName,surname,jobTitle,employeeId";
-
+    let url: &'static str = "https://graph.microsoft.com/v1.0/me?$select=id,displayName,mail,userPrincipalName,givenName,surname,jobTitle,employeeId";
     let resp = client
         .get(url)
         .bearer_auth(token)
@@ -133,7 +132,6 @@ async fn get_user_profile(token: &str, include_groups: bool) -> Result<GraphUser
     };
 
     if include_groups {
-        tracing::info!("Inkluderer grupper (separate kall + paging)");
         match fetch_member_of(token).await {
             Ok(groups) => {
                 user.groups = Some(groups);
@@ -143,6 +141,38 @@ async fn get_user_profile(token: &str, include_groups: bool) -> Result<GraphUser
             }
         }
     }
+    let photo_base64 = match client
+        .get("https://graph.microsoft.com/v1.0/me/photo/$value")
+        .bearer_auth(token)
+        .send()
+        .await
+    {
+        Ok(resp) => {
+            // Own the content type string before consuming resp with bytes()
+            let content_type = resp
+                .headers()
+                .get(header::CONTENT_TYPE)
+                .and_then(|v| v.to_str().ok())
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| "image/jpeg".to_string()); // Fallback
+
+            match resp.bytes().await {
+                Ok(bytes) => {
+                    let b64 = general_purpose::STANDARD.encode(bytes);
+                    Some(format!("data:{};base64,{}", content_type, b64))
+                }
+                Err(e) => {
+                    tracing::warn!("Klarte ikke lese bilde bytes: {}", e);
+                    None
+                }
+            }
+        }
+        Err(e) => {
+            tracing::warn!("Klarte ikke hente bilde fra graph API: {}", e);
+            None
+        }
+    };
+    user.photo = photo_base64;
 
     Ok(user)
 }
