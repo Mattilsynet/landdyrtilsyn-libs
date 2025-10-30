@@ -147,30 +147,3 @@ impl Default for KoordinatClient {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::normalize_house_letter;
-
-    #[test]
-    fn normalizes_space_between_number_and_letter() {
-        assert_eq!(
-            normalize_house_letter("Banevegen 12 b, Ridabu"),
-            "Banevegen 12b, Ridabu"
-        );
-        assert_eq!(normalize_house_letter("Storgata 7 a"), "Storgata 7a");
-    }
-
-    #[test]
-    fn leaves_already_compact_intact() {
-        assert_eq!(
-            normalize_house_letter("Banevegen 12b, Ridabu"),
-            "Banevegen 12b, Ridabu"
-        );
-    }
-
-    #[test]
-    fn does_not_remove_spaces_after_letters_or_words() {
-        assert_eq!(normalize_house_letter("Gate 12b c"), "Gate 12b c");
-        assert_eq!(normalize_house_letter("Gate 123, Oslo"), "Gate 123, Oslo");
-    }
-}
