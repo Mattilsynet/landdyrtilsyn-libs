@@ -146,4 +146,3 @@ impl Default for KoordinatClient {
         Self::new()
     }
 }
-
