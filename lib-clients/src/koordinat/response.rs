@@ -32,7 +32,7 @@ pub struct AddressResult {
     pub municipality_number: Option<String>,
 
     #[serde(rename = "representasjonspunkt")]
-    pub coordinates: Option<Coordinates>,
+    pub koordinater: Option<Koordinater>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -48,15 +48,12 @@ pub enum AddressNumber {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Coordinates {
+pub struct Koordinater {
     #[serde(rename = "lat")]
     pub latitude: f64,
 
     #[serde(rename = "lon")]
     pub longitude: f64,
-
-    #[serde(rename = "epsg")]
-    pub coordinate_system: Option<String>,
 }
 
 impl AddressResult {
@@ -64,7 +61,7 @@ impl AddressResult {
         self.address_text.clone()
     }
 
-    pub fn get_coordinates(&self) -> Option<(f64, f64)> {
-        self.coordinates.as_ref().map(|c| (c.latitude, c.longitude))
+    pub fn get_koordinater(&self) -> Option<(f64, f64)> {
+        self.koordinater.as_ref().map(|c| (c.latitude, c.longitude))
     }
 }

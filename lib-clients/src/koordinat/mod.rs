@@ -4,4 +4,4 @@ pub mod response;
 
 pub use error::{GeonorgeError, Result};
 pub use koordinat_client::KoordinatClient;
-pub use response::{AddressResult, Coordinates, GeonorgeResponse};
+pub use response::{AddressResult, GeonorgeResponse, Koordinater};

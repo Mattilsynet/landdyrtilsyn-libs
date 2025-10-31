@@ -53,6 +53,6 @@ pub use ejb::{
 
 #[cfg(feature = "koordinat")]
 pub use koordinat::{
-    koordinat_client::KoordinatClient, response::AddressResult, response::Coordinates,
-    response::GeonorgeResponse,
+    koordinat_client::KoordinatClient, response::AddressResult, response::GeonorgeResponse,
+    response::Koordinater,
 };

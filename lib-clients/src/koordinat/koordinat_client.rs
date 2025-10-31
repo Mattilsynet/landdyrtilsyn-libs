@@ -134,10 +134,10 @@ impl KoordinatClient {
         Ok(geonorge_response.addresses)
     }
 
-    pub async fn get_coordinates(&self, address: &str) -> Result<Option<(f64, f64)>> {
+    pub async fn get_koordinater(&self, address: &str) -> Result<Option<(f64, f64)>> {
         let results = self.search_address(address).await?;
 
-        Ok(results.first().and_then(|r| r.get_coordinates()))
+        Ok(results.first().and_then(|r| r.get_koordinater()))
     }
 }
 
