@@ -5,7 +5,7 @@ use std::str::FromStr;
 pub mod sak;
 pub mod tilgangshjemmel;
 pub mod tilgangskoder;
-
+pub mod v2;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Landkode(pub String);
 

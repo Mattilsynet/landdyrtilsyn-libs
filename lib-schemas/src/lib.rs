@@ -1,5 +1,6 @@
 pub mod arkiv;
 pub mod error;
+pub mod typer;
 
 #[cfg(feature = "arkiv")]
 pub use arkiv::{
