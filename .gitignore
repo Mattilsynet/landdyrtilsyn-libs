@@ -21,3 +21,4 @@ Cargo.lock
 #.idea/
 /.idea/
 /landdyrtilsyn-libs.iml
+.vscode/settings.json
