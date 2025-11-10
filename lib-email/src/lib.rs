@@ -49,7 +49,6 @@ async fn send_email(email: Email, nats_client: Client) {
         Ok(_response) => {}
         Err(_e) => {
             tracing::error!("Failed to send email via NATS");
-
             // Send melding på slack
             // TODO
         }
