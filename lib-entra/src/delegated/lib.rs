@@ -1,13 +1,13 @@
 use reqwest::{StatusCode, header};
 
-use serde::Deserialize;
-use serde_json;
-
 use crate::{
     error::EntraError,
     types::{GraphUser, GraphUserMemberOf, OboConfig, Result},
 };
 use base64::{Engine as _, engine::general_purpose};
+use secrecy::{ExposeSecret, SecretString};
+use serde::Deserialize;
+use serde_json;
 use tracing::{self, instrument};
 
 /// (Krever *delegated permisson*)
@@ -17,7 +17,8 @@ use tracing::{self, instrument};
 /// ``` let user: EntraUser = get_user(user_token:"2dfsalfga3hafks", include_groups:true); ```
 ///
 pub async fn get_user(user_token: &str, include_groups: bool) -> Result<GraphUser> {
-    let graph_token = exchange_for_graph_token_obo(user_token).await?;
+    let secret_user_token = SecretString::from(user_token);
+    let graph_token = exchange_for_graph_token_obo(&secret_user_token).await?;
     get_user_profile(&graph_token, include_groups).await
 }
 
@@ -28,7 +29,7 @@ struct MemberOfPage {
     next_link: Option<String>,
 }
 
-async fn fetch_member_of(token: &str) -> Result<Vec<GraphUserMemberOf>> {
+async fn fetch_member_of(token: &SecretString) -> Result<Vec<GraphUserMemberOf>> {
     let client = reqwest::Client::new();
     let mut url = "https://graph.microsoft.com/v1.0/me/memberOf?$select=id".to_string();
     let mut all: Vec<GraphUserMemberOf> = Vec::new();
@@ -36,7 +37,7 @@ async fn fetch_member_of(token: &str) -> Result<Vec<GraphUserMemberOf>> {
     loop {
         let resp = client
             .get(&url)
-            .bearer_auth(token)
+            .bearer_auth(token.expose_secret())
             .send()
             .await
             .map_err(|e| EntraError::Network(e.to_string()))?;
@@ -67,14 +68,14 @@ async fn fetch_member_of(token: &str) -> Result<Vec<GraphUserMemberOf>> {
 }
 
 #[instrument(name = "Henter fra graphAPIet", skip(token), level = "info")]
-async fn get_user_profile(token: &str, include_groups: bool) -> Result<GraphUser> {
+async fn get_user_profile(token: &SecretString, include_groups: bool) -> Result<GraphUser> {
     tracing::info!("Henter brukerinformasjon fra graphAPIet");
 
     let client = reqwest::Client::new();
     let url: &'static str = "https://graph.microsoft.com/v1.0/me?$select=id,displayName,mail,userPrincipalName,givenName,surname,jobTitle,employeeId";
     let resp = client
         .get(url)
-        .bearer_auth(token)
+        .bearer_auth(token.expose_secret())
         .send()
         .await
         .map_err(|e| {
@@ -113,7 +114,7 @@ async fn get_user_profile(token: &str, include_groups: bool) -> Result<GraphUser
     }
     let photo_base64 = match client
         .get("https://graph.microsoft.com/v1.0/me/photo/$value")
-        .bearer_auth(token)
+        .bearer_auth(token.expose_secret())
         .send()
         .await
     {
@@ -158,7 +159,7 @@ struct OboTokenResponse {
     skip(user_token),
     level = "info"
 )]
-async fn exchange_for_graph_token_obo(user_token: &str) -> Result<String> {
+async fn exchange_for_graph_token_obo(user_token: &SecretString) -> Result<SecretString> {
     let cfg = OboConfig::from_env()?;
 
     tracing::info!(
@@ -174,7 +175,7 @@ async fn exchange_for_graph_token_obo(user_token: &str) -> Result<String> {
         ("client_secret", cfg.client_secret.as_str()),
         ("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer"),
         ("requested_token_use", "on_behalf_of"),
-        ("assertion", user_token),
+        ("assertion", user_token.expose_secret()),
         ("scope", scope_param),
     ];
     let client = reqwest::Client::new();
@@ -197,7 +198,7 @@ async fn exchange_for_graph_token_obo(user_token: &str) -> Result<String> {
         tracing::error!("Klarte ikke parse on-behalf-of token response");
         EntraError::Deserialize(e.to_string())
     })?;
-    Ok(parsed.access_token)
+    Ok(SecretString::from(parsed.access_token))
 }
 
 #[cfg(test)]
@@ -206,8 +207,8 @@ mod tests {
 
     #[tokio::test]
     async fn invalid_token_results_in_error() {
-        let token = "invalid.token";
-        let result = get_user_profile(token, false).await;
+        let token = SecretString::from("invalid.token");
+        let result = get_user_profile(&token, false).await;
         assert!(result.is_err());
     }
 }

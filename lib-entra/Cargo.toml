@@ -3,6 +3,11 @@ name = "lib-entra"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+default = []
+delegated_permission = []
+application_permission = []
+
 [dependencies]
 reqwest = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
@@ -10,6 +15,8 @@ thiserror = { workspace = true }
 serde_json = { workspace = true }
 tracing = { workspace = true }
 base64 = {workspace = true}
+secrecy = { workspace = true }
+
 
 [dev-dependencies]
 tokio = { workspace = true }
