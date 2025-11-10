@@ -1,0 +1,11 @@
+[package]
+name = "lib-email"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+thiserror = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+lib-nats = { git = "https://github.com/Mattilsynet/landdyrtilsyn-libs.git", tag = "1.4.4" }

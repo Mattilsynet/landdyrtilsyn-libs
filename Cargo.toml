@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [workspace]
-members = ["lib-keycloak-client", "lib-auth", "lib-google-cloud-storage", "lib-sql", "lib-nats", "lib-clients", "lib-schemas", "lib-slack-notifier", "lib-entra"]
+members = ["lib-keycloak-client", "lib-auth", "lib-google-cloud-storage", "lib-sql", "lib-nats", "lib-clients", "lib-schemas", "lib-slack-notifier", "lib-entra", "lib-email"]
 
 [workspace.dependencies]
 serde = { version = "1.0.219", features = ["derive"] }
@@ -23,4 +23,3 @@ uuid = { version = "1.18.1", features = ["v4"] }
 tokio = { version = "1.47.1", features = ["rt-multi-thread", "macros"] }
 
 base64 = "0.22.1"
-
