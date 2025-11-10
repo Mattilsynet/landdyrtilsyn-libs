@@ -9,8 +9,9 @@ For mer informasjon om Microsoft sitt graph API, sjekk [Infrastruktur sin oversi
 
 
 ## lib-entra features
-```lib-entra = {git = "...", features = ["delegated_permission","application_permission"]}```
-
-
 lib-entra er delt opp i to: ```lib_entra::application``` og ```lib_entra::delegated```. Dette gir tilgang til funksjonalitet som er støtte av de to scopene.
 
+Benytt én eller begge features slik:
+```toml
+lib-entra = {git = "https://github.com/Mattilsynet/landdyrtilsyn-libs.git", features = ["delegated_permission", "application_permission"]}
+```
