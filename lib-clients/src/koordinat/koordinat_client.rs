@@ -3,7 +3,7 @@ use crate::koordinat::{GeonorgeError, Result};
 use reqwest_middleware::reqwest::Client;
 use reqwest_middleware::{ClientBuilder as MiddlewareClientBuilder, ClientWithMiddleware};
 use reqwest_retry::{RetryTransientMiddleware, policies::ExponentialBackoff};
-use tracing::{debug, error, info};
+use tracing;
 
 const GEONORGE_API_URL: &str = "https://ws.geonorge.no/adresser/v1";
 
@@ -58,11 +58,11 @@ pub struct KoordinatClient {
 }
 
 impl KoordinatClient {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self::with_base_url(GEONORGE_API_URL.to_string())
     }
 
-    pub fn with_base_url(base_url: String) -> Self {
+    fn with_base_url(base_url: String) -> Self {
         let retry_policy = ExponentialBackoff::builder().build_with_max_retries(3);
         let client = MiddlewareClientBuilder::new(Client::new())
             .with(RetryTransientMiddleware::new_with_policy(retry_policy))
@@ -71,7 +71,11 @@ impl KoordinatClient {
         Self { client, base_url }
     }
 
-    pub async fn search_address(&self, address: &str) -> Result<Vec<AddressResult>> {
+    #[tracing::instrument(
+        name = "Henter adresseobjekt fra GeoNorge for å få koordinater.",
+        skip(self, address)
+    )]
+    async fn search_address(&self, address: &str) -> Result<Vec<AddressResult>> {
         if address.trim().is_empty() {
             return Err(GeonorgeError::InvalidAddress(
                 "Address cannot be empty".to_string(),
@@ -80,7 +84,6 @@ impl KoordinatClient {
 
         let normalized_address = normalize_house_letter(address);
 
-        info!("Searching for address: {}", address);
         let url = format!("{}/sok", self.base_url);
 
         let response = self
@@ -94,14 +97,14 @@ impl KoordinatClient {
             .send()
             .await
             .map_err(|e| {
-                error!("Failed to send request to Geonorge API: {}", e);
+                tracing::error!("Klarte ikke sende request til GeoNorge");
                 GeonorgeError::RequestError(e.to_string())
             })?;
 
         if !response.status().is_success() {
             let status = response.status();
             let error_text = response.text().await.unwrap_or_default();
-            error!("Geonorge API returned error {}: {}", status, error_text);
+            tracing::error!("Geonorge API returned error {}: {}", status, error_text);
             return Err(GeonorgeError::ApiError(format!(
                 "API returned status {}: {}",
                 status, error_text
@@ -109,27 +112,19 @@ impl KoordinatClient {
         }
 
         let response_text = response.text().await.map_err(|e| {
-            error!("Failed to read response body: {}", e);
+            tracing::error!("Failed to read response body: {}", e);
             GeonorgeError::RequestError(e.to_string())
         })?;
 
-        debug!("Geonorge API response: {}", response_text);
-
         let geonorge_response: GeonorgeResponse =
             serde_json::from_str(&response_text).map_err(|e| {
-                error!("Failed to parse Geonorge response: {}", e);
+                tracing::error!("Failed to parse Geonorge response: {}", e);
                 GeonorgeError::ParseError(e.to_string())
             })?;
 
         if geonorge_response.addresses.is_empty() {
             return Err(GeonorgeError::NoResults(address.to_string()));
         }
-
-        info!(
-            "Found {} result(s) for address: {}",
-            geonorge_response.addresses.len(),
-            address
-        );
 
         Ok(geonorge_response.addresses)
     }
