@@ -7,50 +7,6 @@ use tracing;
 
 const GEONORGE_API_URL: &str = "https://ws.geonorge.no/adresser/v1";
 
-fn normalize_house_letter(s: &str) -> String {
-    let chars: Vec<char> = s.chars().collect();
-    let mut out = String::with_capacity(s.len());
-    let mut i = 0;
-    let mut in_digits = false;
-
-    while i < chars.len() {
-        let c = chars[i];
-
-        if c.is_ascii_digit() {
-            in_digits = true;
-            out.push(c);
-            i += 1;
-            continue;
-        }
-
-        if c.is_whitespace() && in_digits {
-            // Peek ahead over whitespace; if the next non-space is alphabetic,
-            // drop the spaces (compact like "12 b" -> "12b"). Otherwise, keep them.
-            let mut k = i;
-            while k < chars.len() && chars[k].is_whitespace() {
-                k += 1;
-            }
-            if k < chars.len() && chars[k].is_alphabetic() {
-                // Skip all whitespace; next loop iteration will push the letter.
-                i = k;
-                continue;
-            } else {
-                // Not followed by a letter; keep current whitespace.
-                out.push(c);
-                in_digits = false;
-                i += 1;
-                continue;
-            }
-        }
-
-        out.push(c);
-        in_digits = false;
-        i += 1;
-    }
-
-    out
-}
-
 #[derive(Clone)]
 pub struct KoordinatClient {
     client: ClientWithMiddleware,
@@ -58,7 +14,7 @@ pub struct KoordinatClient {
 }
 
 impl KoordinatClient {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self::with_base_url(GEONORGE_API_URL.to_string())
     }
 
@@ -140,4 +96,48 @@ impl Default for KoordinatClient {
     fn default() -> Self {
         Self::new()
     }
+}
+
+fn normalize_house_letter(s: &str) -> String {
+    let chars: Vec<char> = s.chars().collect();
+    let mut out = String::with_capacity(s.len());
+    let mut i = 0;
+    let mut in_digits = false;
+
+    while i < chars.len() {
+        let c = chars[i];
+
+        if c.is_ascii_digit() {
+            in_digits = true;
+            out.push(c);
+            i += 1;
+            continue;
+        }
+
+        if c.is_whitespace() && in_digits {
+            // Peek ahead over whitespace; if the next non-space is alphabetic,
+            // drop the spaces (compact like "12 b" -> "12b"). Otherwise, keep them.
+            let mut k = i;
+            while k < chars.len() && chars[k].is_whitespace() {
+                k += 1;
+            }
+            if k < chars.len() && chars[k].is_alphabetic() {
+                // Skip all whitespace; next loop iteration will push the letter.
+                i = k;
+                continue;
+            } else {
+                // Not followed by a letter; keep current whitespace.
+                out.push(c);
+                in_digits = false;
+                i += 1;
+                continue;
+            }
+        }
+
+        out.push(c);
+        in_digits = false;
+        i += 1;
+    }
+
+    out
 }
