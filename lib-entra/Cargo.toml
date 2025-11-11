@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [features]
-default = []
+default = ["delegated_permission", "application_permission"]
 delegated_permission = []
 application_permission = []
 
