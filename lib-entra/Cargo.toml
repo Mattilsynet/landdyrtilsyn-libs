@@ -4,9 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [features]
-default = ["delegated_permission", "application_permission"]
-delegated_permission = []
-application_permission = []
+default = ["delegated_permissions", "application_permissions"]
+delegated_permissions = []
+application_permissions = []
 
 [dependencies]
 reqwest = { workspace = true }
