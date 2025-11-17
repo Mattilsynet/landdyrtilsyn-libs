@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::typer::{organisasjonsnummer::Organisasjonsnummer, personnummer::Personnummer};
 
@@ -73,13 +74,9 @@ pub struct OpprettInterntNotatJurnalpost {
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct Dokument {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub tittel: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub filtype: Option<String>,
-    // Base64
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub innhold: Option<String>,
+    pub tittel: String,
+    pub filtype: String,
+    pub dokument_referanse: Uuid,
 }
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
