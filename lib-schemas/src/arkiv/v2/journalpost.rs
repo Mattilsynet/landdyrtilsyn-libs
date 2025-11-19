@@ -13,7 +13,7 @@ pub struct JournalpostResponse {
     pub tittel: String,
     pub dokument_dato: DateTime<Utc>,
     pub journalposttype: JournalpostType,
-    pub journalstatus: Journalstatus,
+    pub journalstatus: Journalpoststatus,
     pub unntatt_offentlighet: bool,
 
     pub saksbehandler: String,
@@ -29,7 +29,7 @@ pub struct JournalpostResponse {
 pub struct JournalpostCommon {
     pub tittel: String,
     pub dokument_dato: DateTime<Utc>,
-    pub journalposttype: String,
+    pub journalposttype: JournalpostType,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tilgangskode: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -138,7 +138,7 @@ pub enum JournalpostType {
 }
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
-pub enum Journalstatus {
+pub enum Journalpoststatus {
     Registrert,
     Reservert,
     Midlertidig,
@@ -147,15 +147,15 @@ pub enum Journalstatus {
     Journalført,
 }
 
-impl Journalstatus {
+impl Journalpoststatus {
     pub fn code(self) -> char {
         match self {
-            Journalstatus::Registrert => 'S',
-            Journalstatus::Reservert => 'R',
-            Journalstatus::Midlertidig => 'M',
-            Journalstatus::Ferdig => 'F',
-            Journalstatus::Ekspedert => 'E',
-            Journalstatus::Journalført => 'J',
+            Journalpoststatus::Registrert => 'S',
+            Journalpoststatus::Reservert => 'R',
+            Journalpoststatus::Midlertidig => 'M',
+            Journalpoststatus::Ferdig => 'F',
+            Journalpoststatus::Ekspedert => 'E',
+            Journalpoststatus::Journalført => 'J',
         }
     }
 
