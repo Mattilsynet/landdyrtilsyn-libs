@@ -111,16 +111,17 @@ impl<S> Service<Request> for Auth<S>
 where
     S: Service<Request, Response = Response> + Clone + Send + 'static,
     S::Future: Send + 'static,
+    S::Error: Into<Error>,
 {
     type Response = S::Response;
-    type Error = S::Error; //Custom error
+    type Error = Error;
     type Future = BoxFuture<'static, std::result::Result<Self::Response, Self::Error>>;
 
     fn poll_ready(
         &mut self,
         cx: &mut std::task::Context<'_>,
     ) -> std::task::Poll<std::result::Result<(), Self::Error>> {
-        self.inner.poll_ready(cx)
+        self.inner.poll_ready(cx).map_err(Into::into)
     }
 
     fn call(&mut self, req: Request) -> Self::Future {
@@ -128,15 +129,12 @@ where
         let validator = self.validator.clone();
 
         Box::pin(async move {
-            let token = extract_bearer_token(&req);
+            let token = extract_bearer_token(&req)
+                .ok_or_else(|| Error::MissingTokenOnRequest("Heihei".to_string()))?;
 
-            match token {
-                Some(t) => {
-                    validator.verify_token(t);
-                    inner.call(req).await
-                }
-                None => Error::MissingTokenOnRequest("Missing token on request".to_string()),
-            }
+            validator.verify_token(token_str).await?;
+
+            inner.call(req).await.map_err(Into::into)
         })
     }
 }
