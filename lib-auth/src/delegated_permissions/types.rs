@@ -15,14 +15,14 @@ pub(crate) struct Claims {
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct JwkSet {
-    keys: Vec<Jwk>,
+    pub(crate) keys: Vec<Jwk>,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
-struct Jwk {
-    kid: String,
-    n: String,
-    e: String,
+pub(crate) struct Jwk {
+    pub(crate) kid: String,
+    pub(crate) n: String,
+    pub(crate) e: String,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]

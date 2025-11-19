@@ -1,12 +1,12 @@
-use std::sync::Arc;
-
+use axum::response::{IntoResponse as _, Response};
 use futures::future::BoxFuture;
-use reqwest::{Request, Response};
-use secrecy::SecretString;
+use jsonwebtoken::{Algorithm, DecodingKey, TokenData, Validation, decode, decode_header};
+use secrecy::{ExposeSecret, SecretString};
+use std::{convert::Infallible, sync::Arc};
 use tower::{Layer, Service};
 
 use crate::{
-    delegated_permissions::types::Claims,
+    delegated_permissions::types::{Claims, JwkSet},
     error::{Error, Result},
 };
 
@@ -14,15 +14,13 @@ use crate::{
 pub struct AuthConfig {
     tenant_id: String,
     client_id: SecretString,
-    client_secret: SecretString,
 }
 
 impl AuthConfig {
-    pub fn new(tenant_id: &str, client_id: SecretString, client_secret: SecretString) -> Self {
+    pub fn new(tenant_id: &str, client_id: SecretString) -> Self {
         Self {
             tenant_id: tenant_id.to_string(),
             client_id,
-            client_secret,
         }
     }
 
@@ -38,55 +36,91 @@ impl AuthConfig {
             .map_err(|_| Error::MissingEnvVariable("AZURE_TENANT_ID is missing".to_string()))?;
         let client_id = std::env::var("AZURE_CLIENT_ID")
             .map_err(|_| Error::MissingEnvVariable("AZURE_CLIENT_ID is missing".to_string()))?;
-        let client_secret = std::env::var("AZURE_CLIENT_SECRET")
-            .map_err(|_| Error::MissingEnvVariable("AZURE_CLIENT_SECRET is missing".to_string()))?;
-
         Ok(Self {
             tenant_id,
             client_id: SecretString::from(client_id),
-            client_secret: SecretString::from(client_secret),
         })
     }
 }
 
-// TokenValidator
 #[derive(Debug, Clone)]
-pub struct EntraIdValidator {
+pub struct TokenValidator {
     config: Arc<AuthConfig>,
-    http: reqwest::Client,
-    jwks: String,
+    pub(crate) jwk_set: JwkSet,
 }
 
-impl EntraIdValidator {
-    pub fn new(config: AuthConfig) -> Self {
-        Self {
+async fn fetch_jwks(jwks_url: &str) -> Result<JwkSet> {
+    reqwest::get(jwks_url)
+        .await?
+        .json::<JwkSet>()
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to fetch JwkSet");
+            Error::ReqwestError(e)
+        })
+}
+
+impl TokenValidator {
+    pub async fn new(config: AuthConfig) -> Result<Self> {
+        let jwks_url = config.get_jwks_url().to_owned();
+        let jwk_set = fetch_jwks(&jwks_url).await.map_err(|error| error)?;
+
+        Ok(Self {
             config: Arc::new(config),
-            http: reqwest::Client::new(),
-            jwks: String::default(),
-        }
+            jwk_set,
+        })
     }
 
-    pub fn from_env() -> Result<Self> {
-        Ok(Self::new(AuthConfig::from_env()?))
+    pub async fn from_env() -> Result<Self> {
+        Ok(Self::new(AuthConfig::from_env()?).await?)
     }
 
-    pub async fn verify_token(&self, token: &str) -> Result<Claims> {
-        todo!()
+    async fn verify_token(&self, token: &str) -> Result<TokenData<Claims>> {
+        let header = decode_header(token).map_err(|e| {
+            tracing::error!("Failed to decode JWT header: {:?}", e);
+            Error::JwtError(e)
+        })?;
+        let kid = header.kid.ok_or_else(|| {
+            tracing::error!("JWT header missing 'kid' field!");
+            Error::JwtError(jsonwebtoken::errors::ErrorKind::InvalidKeyFormat.into())
+        })?;
+
+        let jwk = self
+            .jwk_set
+            .keys
+            .iter()
+            .find(|&k| k.kid == kid)
+            .ok_or_else(|| {
+                tracing::error!("No matching JWK found for kid: {}", kid);
+                Error::JwtError(jsonwebtoken::errors::ErrorKind::InvalidIssuer.into())
+            })?;
+
+        let decoding_key = DecodingKey::from_rsa_components(&jwk.n, &jwk.e)?;
+
+        let mut validation = Validation::new(Algorithm::RS256);
+        validation.set_audience(&[self.config.client_id.expose_secret()]);
+        validation.set_issuer(&[format!(
+            "https://login.microsoftonline.com/{}/v2.0",
+            self.config.tenant_id
+        )]);
+
+        let token_data = decode::<Claims>(token, &decoding_key, &validation)?;
+        Ok(token_data)
     }
 }
 
 #[derive(Clone, Debug)]
 pub struct AuthLayer {
-    validator: EntraIdValidator,
+    validator: TokenValidator,
 }
 
 impl AuthLayer {
-    pub fn new(validator: EntraIdValidator) -> Self {
+    pub async fn new(validator: TokenValidator) -> Self {
         Self { validator }
     }
 
-    pub fn from_env() -> Result<Self> {
-        Ok(Self::new(EntraIdValidator::from_env()?))
+    pub async fn from_env() -> Result<Self> {
+        Ok(Self::new(TokenValidator::from_env().await?).await)
     }
 }
 
@@ -104,42 +138,54 @@ impl<S> Layer<S> for AuthLayer {
 #[derive(Clone, Debug)]
 pub struct Auth<S> {
     inner: S,
-    validator: EntraIdValidator,
+    validator: TokenValidator,
 }
 
-impl<S> Service<Request> for Auth<S>
+impl<S, ReqBody, ResBody> Service<http::Request<ReqBody>> for Auth<S>
 where
-    S: Service<Request, Response = Response> + Clone + Send + 'static,
+    S: Service<http::Request<ReqBody>, Response = http::Response<ResBody>, Error = Infallible>
+        + Clone
+        + Send
+        + 'static,
     S::Future: Send + 'static,
-    S::Error: Into<Error>,
+    ReqBody: Send + 'static,
+    ResBody: Send + 'static,
 {
-    type Response = S::Response;
-    type Error = Error;
+    type Response = Response;
+    type Error = Infallible;
     type Future = BoxFuture<'static, std::result::Result<Self::Response, Self::Error>>;
 
     fn poll_ready(
         &mut self,
         cx: &mut std::task::Context<'_>,
     ) -> std::task::Poll<std::result::Result<(), Self::Error>> {
-        self.inner.poll_ready(cx).map_err(Into::into)
+        self.inner.poll_ready(cx)
     }
 
-    fn call(&mut self, req: Request) -> Self::Future {
-        let inner = self.inner.clone();
+    fn call(&mut self, req: http::Request<ReqBody>) -> Self::Future {
+        let mut inner = self.inner.clone();
         let validator = self.validator.clone();
 
         Box::pin(async move {
-            let token = extract_bearer_token(&req)
-                .ok_or_else(|| Error::MissingTokenOnRequest("Heihei".to_string()))?;
+            // Verify token first
+            let token = match extract_bearer_token(&req) {
+                Some(t) => t,
+                None => return Ok(Error::MissingTokenOnRequest.into_response()),
+            };
 
-            validator.verify_token(token_str).await?;
+            if let Err(e) = validator.verify_token(token).await {
+                return Ok(e.into_response());
+            }
 
-            inner.call(req).await.map_err(Into::into)
+            // Call inner service (Infallible error so unwrap is safe)
+            let inner_response = inner.call(req).await;
+            let ok_response = inner_response.into_response();
+            Ok(ok_response)
         })
     }
 }
 
-pub fn extract_bearer_token(req: &Request) -> Option<&str> {
+pub fn extract_bearer_token<B>(req: &Request<B>) -> Option<&str> {
     req.headers()
         .get("Authorization")
         .and_then(|header| header.to_str().ok())
