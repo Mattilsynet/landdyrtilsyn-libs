@@ -12,8 +12,8 @@ pub struct JournalpostId(String);
 pub struct JournalpostResponse {
     pub tittel: String,
     pub dokument_dato: DateTime<Utc>,
-    pub journalposttype: String,
-    pub journalstatus: String,
+    pub journalposttype: JournalpostType,
+    pub journalstatus: Journalstatus,
     pub unntatt_offentlighet: bool,
 
     pub saksbehandler: String,
@@ -128,4 +128,46 @@ pub struct AvsenderMottaker {
     pub id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id_type: Option<String>,
+}
+
+#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
+pub enum JournalpostType {
+    Inngående,
+    Utgående,
+    InterntNotat,
+}
+
+#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
+pub enum Journalstatus {
+    Registrert,
+    Reservert,
+    Midlertidig,
+    Ferdig,
+    Ekspedert,
+    Journalført,
+}
+
+impl Journalstatus {
+    pub fn code(self) -> char {
+        match self {
+            Journalstatus::Registrert => 'S',
+            Journalstatus::Reservert => 'R',
+            Journalstatus::Midlertidig => 'M',
+            Journalstatus::Ferdig => 'F',
+            Journalstatus::Ekspedert => 'E',
+            Journalstatus::Journalført => 'J',
+        }
+    }
+
+    pub fn from_code(c: char) -> Option<Self> {
+        match c {
+            'S' => Some(Self::Registrert),
+            'R' => Some(Self::Reservert),
+            'M' => Some(Self::Midlertidig),
+            'F' => Some(Self::Ferdig),
+            'E' => Some(Self::Ekspedert),
+            'J' => Some(Self::Journalført),
+            _ => None,
+        }
+    }
 }
