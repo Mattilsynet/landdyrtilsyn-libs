@@ -80,8 +80,8 @@ impl TokenValidator {
         Ok(Self::new(AuthConfig::from_env()?).await?)
     }
 
-    async fn verify_token(&self, token: &str) -> Result<TokenData<Claims>> {
-        let header = decode_header(token).map_err(|e| {
+    async fn verify_token(&self, token: &SecretString) -> Result<TokenData<Claims>> {
+        let header = decode_header(token.expose_secret()).map_err(|e| {
             tracing::error!("Failed to decode JWT header: {:?}", e);
             Error::JwtError(e)
         })?;
@@ -92,7 +92,7 @@ impl TokenValidator {
         {
             let cache = self.jwk_set.read().await;
             if let Some(jwk) = cache.keys.iter().find(|&k| k.kid == kid) {
-                return self.decode_with_jwk(token, jwk);
+                return self.decode_with_jwk(token.expose_secret(), jwk);
             }
         }
         let new_jwks = fetch_jwks(&self.config.get_jwks_url()).await?;
@@ -102,7 +102,7 @@ impl TokenValidator {
             cache.keys.iter().find(|k| k.kid == kid).cloned()
         };
         match found_jwk {
-            Some(jwk) => self.decode_with_jwk(token, &jwk),
+            Some(jwk) => self.decode_with_jwk(token.expose_secret(), &jwk),
             None => {
                 tracing::warn!("Key ID {} still not found after refresh", kid);
                 Err(Error::JwtError(
@@ -183,11 +183,11 @@ where
 
         Box::pin(async move {
             let token = match extract_bearer_token(&req) {
-                Some(t) if !t.is_empty() => t,
+                Some(t) if !t.expose_secret().is_empty() => t,
                 _ => return Ok(StatusCode::UNAUTHORIZED.into_response()),
             };
 
-            match validator.verify_token(token).await {
+            match validator.verify_token(&token).await {
                 Ok(token_data) => {
                     // Attach claims to request extensions for downstream handlers
                     req.extensions_mut().insert(token_data.claims);
@@ -203,9 +203,10 @@ where
     }
 }
 
-pub fn extract_bearer_token<B>(req: &Request<B>) -> Option<&str> {
+pub fn extract_bearer_token<B>(req: &Request<B>) -> Option<SecretString> {
     req.headers()
         .get(axum::http::header::AUTHORIZATION)
         .and_then(|header| header.to_str().ok())
         .and_then(|auth_str| auth_str.strip_prefix("Bearer "))
+        .map(|token| SecretString::from(token))
 }
