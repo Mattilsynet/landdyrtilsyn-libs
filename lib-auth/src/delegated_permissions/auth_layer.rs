@@ -6,8 +6,10 @@ use futures::future::BoxFuture;
 use jsonwebtoken::{Algorithm, DecodingKey, TokenData, Validation, decode, decode_header};
 use secrecy::{ExposeSecret, SecretString};
 use std::{convert::Infallible, sync::Arc};
+use tokio::sync::RwLock;
 use tower::{Layer, Service};
 
+use crate::delegated_permissions::types::Jwk;
 use crate::{
     delegated_permissions::types::{Claims, JwkSet},
     error::{Error, Result},
@@ -49,7 +51,7 @@ impl AuthConfig {
 #[derive(Debug, Clone)]
 pub struct TokenValidator {
     config: Arc<AuthConfig>,
-    pub(crate) jwk_set: JwkSet,
+    pub(crate) jwk_set: Arc<RwLock<JwkSet>>,
 }
 
 async fn fetch_jwks(jwks_url: &str) -> Result<JwkSet> {
@@ -70,7 +72,7 @@ impl TokenValidator {
 
         Ok(Self {
             config: Arc::new(config),
-            jwk_set,
+            jwk_set: Arc::new(RwLock::new(jwk_set)),
         })
     }
 
@@ -87,28 +89,37 @@ impl TokenValidator {
             tracing::error!("JWT header missing 'kid' field!");
             Error::JwtError(jsonwebtoken::errors::ErrorKind::InvalidKeyFormat.into())
         })?;
-
-        let jwk = self
-            .jwk_set
-            .keys
-            .iter()
-            .find(|&k| k.kid == kid)
-            .ok_or_else(|| {
-                tracing::error!("No matching JWK found for kid: {}", kid);
-                Error::JwtError(jsonwebtoken::errors::ErrorKind::InvalidIssuer.into())
-            })?;
-
+        {
+            let cache = self.jwk_set.read().await;
+            if let Some(jwk) = cache.keys.iter().find(|&k| k.kid == kid) {
+                return self.decode_with_jwk(token, jwk);
+            }
+        }
+        let new_jwks = fetch_jwks(&self.config.get_jwks_url()).await?;
+        let found_jwk = {
+            let mut cache = self.jwk_set.write().await;
+            *cache = new_jwks;
+            cache.keys.iter().find(|k| k.kid == kid).cloned()
+        };
+        match found_jwk {
+            Some(jwk) => self.decode_with_jwk(token, &jwk),
+            None => {
+                tracing::warn!("Key ID {} still not found after refresh", kid);
+                Err(Error::JwtError(
+                    jsonwebtoken::errors::ErrorKind::InvalidIssuer.into(),
+                ))
+            }
+        }
+    }
+    fn decode_with_jwk(&self, token: &str, jwk: &Jwk) -> Result<TokenData<Claims>> {
         let decoding_key = DecodingKey::from_rsa_components(&jwk.n, &jwk.e)?;
-
         let mut validation = Validation::new(Algorithm::RS256);
         validation.set_audience(&[self.config.client_id.expose_secret()]);
         validation.set_issuer(&[format!(
             "https://login.microsoftonline.com/{}/v2.0",
             self.config.tenant_id
         )]);
-
-        let token_data = decode::<Claims>(token, &decoding_key, &validation)?;
-        Ok(token_data)
+        decode::<Claims>(token, &decoding_key, &validation).map_err(Error::JwtError)
     }
 }
 
