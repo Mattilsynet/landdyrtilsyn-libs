@@ -20,7 +20,7 @@ pub async fn send_formatted_email(
         subject: email_subject,
         to_recipients: vec![Recipient {
             email_address: Some(EmailAddress {
-                address: "andreas.sigstad.lande@mattilsynet.no".to_string(),
+                address: email_address.to_string(),
             }),
         }],
         body: Some(Body {
