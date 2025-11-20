@@ -1,5 +1,6 @@
 use crate::error::Result;
 use secrecy::SecretString;
+
 #[derive(Debug, Clone)]
 pub struct AzureAuthConfiguration {
     pub client_id: SecretString,

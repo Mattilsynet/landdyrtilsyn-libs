@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::typer::{organisasjonsnummer::Organisasjonsnummer, personnummer::Personnummer};
 
@@ -11,8 +12,8 @@ pub struct JournalpostId(String);
 pub struct JournalpostResponse {
     pub tittel: String,
     pub dokument_dato: DateTime<Utc>,
-    pub journalposttype: String,
-    pub journalstatus: String,
+    pub journalposttype: JournalpostType,
+    pub journalstatus: Journalpoststatus,
     pub unntatt_offentlighet: bool,
 
     pub saksbehandler: String,
@@ -28,7 +29,7 @@ pub struct JournalpostResponse {
 pub struct JournalpostCommon {
     pub tittel: String,
     pub dokument_dato: DateTime<Utc>,
-    pub journalposttype: String,
+    pub journalposttype: JournalpostType,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tilgangskode: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -73,13 +74,9 @@ pub struct OpprettInterntNotatJurnalpost {
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct Dokument {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub tittel: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub filtype: Option<String>,
-    // Base64
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub innhold: Option<String>,
+    pub tittel: String,
+    pub filtype: String,
+    pub dokument_referanse: Uuid,
 }
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
@@ -131,4 +128,46 @@ pub struct AvsenderMottaker {
     pub id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id_type: Option<String>,
+}
+
+#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
+pub enum JournalpostType {
+    Inngående,
+    Utgående,
+    InterntNotat,
+}
+
+#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
+pub enum Journalpoststatus {
+    Registrert,
+    Reservert,
+    Midlertidig,
+    Ferdig,
+    Ekspedert,
+    Journalført,
+}
+
+impl Journalpoststatus {
+    pub fn code(self) -> char {
+        match self {
+            Journalpoststatus::Registrert => 'S',
+            Journalpoststatus::Reservert => 'R',
+            Journalpoststatus::Midlertidig => 'M',
+            Journalpoststatus::Ferdig => 'F',
+            Journalpoststatus::Ekspedert => 'E',
+            Journalpoststatus::Journalført => 'J',
+        }
+    }
+
+    pub fn from_code(c: char) -> Option<Self> {
+        match c {
+            'S' => Some(Self::Registrert),
+            'R' => Some(Self::Reservert),
+            'M' => Some(Self::Midlertidig),
+            'F' => Some(Self::Ferdig),
+            'E' => Some(Self::Ekspedert),
+            'J' => Some(Self::Journalført),
+            _ => None,
+        }
+    }
 }
