@@ -9,8 +9,8 @@ pub(crate) struct Claims {
     iss: String,
     nbf: usize,
     sub: String,
-    name: String,
-    preferred_username: String,
+    pub(crate) name: String,
+    pub(crate) preferred_username: String,
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]

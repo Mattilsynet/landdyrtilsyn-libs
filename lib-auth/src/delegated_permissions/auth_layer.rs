@@ -9,7 +9,7 @@ use std::{convert::Infallible, sync::Arc};
 use tokio::sync::RwLock;
 use tower::{Layer, Service};
 
-use crate::delegated_permissions::types::Jwk;
+use crate::delegated_permissions::types::{Jwk, UserData};
 use crate::{
     delegated_permissions::types::{Claims, JwkSet},
     error::{Error, Result},
@@ -189,8 +189,12 @@ where
 
             match validator.verify_token(&token).await {
                 Ok(token_data) => {
-                    // Attach claims to request extensions for downstream handlers
-                    req.extensions_mut().insert(token_data.claims);
+                    let user_data = UserData {
+                        navn: token_data.claims.name,
+                        epost: token_data.claims.preferred_username,
+                    };
+
+                    req.extensions_mut().insert(user_data);
                 }
                 Err(e) => {
                     return Ok(e.status_code().into_response());
