@@ -1,4 +1,7 @@
+use axum::BoxError;
+use axum::http::{Request, StatusCode};
 use axum::response::{IntoResponse as _, Response};
+use bytes::Bytes;
 use futures::future::BoxFuture;
 use jsonwebtoken::{Algorithm, DecodingKey, TokenData, Validation, decode, decode_header};
 use secrecy::{ExposeSecret, SecretString};
@@ -141,17 +144,18 @@ pub struct Auth<S> {
     validator: TokenValidator,
 }
 
-impl<S, ReqBody, ResBody> Service<http::Request<ReqBody>> for Auth<S>
+impl<S, ReqBody, ResBody> Service<Request<ReqBody>> for Auth<S>
 where
-    S: Service<http::Request<ReqBody>, Response = http::Response<ResBody>, Error = Infallible>
+    S: Service<Request<ReqBody>, Response = axum::http::Response<ResBody>, Error = Infallible>
         + Clone
         + Send
         + 'static,
     S::Future: Send + 'static,
     ReqBody: Send + 'static,
-    ResBody: Send + 'static,
+    ResBody: axum::body::HttpBody<Data = Bytes> + Send + 'static,
+    ResBody::Error: Into<BoxError>,
 {
-    type Response = Response;
+    type Response = Response; // unified axum Response
     type Error = Infallible;
     type Future = BoxFuture<'static, std::result::Result<Self::Response, Self::Error>>;
 
@@ -162,32 +166,35 @@ where
         self.inner.poll_ready(cx)
     }
 
-    fn call(&mut self, req: http::Request<ReqBody>) -> Self::Future {
+    fn call(&mut self, mut req: Request<ReqBody>) -> Self::Future {
         let mut inner = self.inner.clone();
         let validator = self.validator.clone();
 
         Box::pin(async move {
-            // Verify token first
             let token = match extract_bearer_token(&req) {
-                Some(t) => t,
-                None => return Ok(Error::MissingTokenOnRequest.into_response()),
+                Some(t) if !t.is_empty() => t,
+                _ => return Ok(StatusCode::UNAUTHORIZED.into_response()),
             };
 
-            if let Err(e) = validator.verify_token(token).await {
-                return Ok(e.into_response());
+            match validator.verify_token(token).await {
+                Ok(token_data) => {
+                    // Attach claims to request extensions for downstream handlers
+                    req.extensions_mut().insert(token_data.claims);
+                }
+                Err(e) => {
+                    return Ok(e.status_code().into_response());
+                }
             }
 
-            // Call inner service (Infallible error so unwrap is safe)
-            let inner_response = inner.call(req).await;
-            let ok_response = inner_response.into_response();
-            Ok(ok_response)
+            let inner_response = inner.call(req).await?; // http::Response<B>
+            Ok(inner_response.into_response()) // convert using IntoResponse
         })
     }
 }
 
 pub fn extract_bearer_token<B>(req: &Request<B>) -> Option<&str> {
     req.headers()
-        .get("Authorization")
+        .get(axum::http::header::AUTHORIZATION)
         .and_then(|header| header.to_str().ok())
         .and_then(|auth_str| auth_str.strip_prefix("Bearer "))
 }

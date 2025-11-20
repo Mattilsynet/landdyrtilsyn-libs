@@ -1,6 +1,5 @@
-use std::fmt::{self};
-
-use http::StatusCode;
+use axum::http::StatusCode;
+use std::fmt;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -13,15 +12,21 @@ pub enum Error {
     InternalError(Box<dyn std::error::Error + Send + Sync>),
 }
 
+impl Error {
+    pub fn status_code(&self) -> StatusCode {
+        match self {
+            Error::MissingEnvVariable(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Error::MissingTokenOnRequest => StatusCode::UNAUTHORIZED,
+            Error::JwtError(_) => StatusCode::UNAUTHORIZED,
+            Error::ReqwestError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Error::InternalError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+}
+
 impl axum::response::IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
-        match self {
-            Error::MissingEnvVariable(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-            Error::MissingTokenOnRequest => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-            Error::JwtError(_) => StatusCode::UNAUTHORIZED.into_response(),
-            Error::ReqwestError(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-            Error::InternalError(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-        }
+        self.status_code().into_response()
     }
 }
 
@@ -36,6 +41,12 @@ where
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{self}")
+        match self {
+            Error::MissingEnvVariable(var) => write!(f, "Missing env variable: {var}"),
+            Error::MissingTokenOnRequest => write!(f, "Missing bearer token on request"),
+            Error::JwtError(e) => write!(f, "JWT error: {e}"),
+            Error::ReqwestError(e) => write!(f, "HTTP client error: {e}"),
+            Error::InternalError(e) => write!(f, "Internal error: {e}"),
+        }
     }
 }
