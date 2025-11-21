@@ -3,7 +3,7 @@ use secrecy::{ExposeSecret, SecretString};
 
 use crate::{
     error::EntraError,
-    types::{GRAPH_USER_SELECT_FIELDS, GraphUser, Result},
+    types::{GRAPH_USER_SELECT_FIELDS, GraphUser, GraphUserSearchResponse, Result},
 };
 
 pub async fn get_user_from_employee_id(
@@ -19,6 +19,7 @@ pub async fn get_user_from_employee_id(
     let response = client
         .get(request_url)
         .bearer_auth(access_token.expose_secret())
+        .header("ConsistencyLevel", "eventual")
         .send()
         .await
         .map_err(|e| EntraError::Network(e.to_string()))?;
@@ -30,8 +31,8 @@ pub async fn get_user_from_employee_id(
         .await
         .map_err(|e| EntraError::Network(e.to_string()))?;
 
-    let user = match status {
-        StatusCode::OK => serde_json::from_str::<GraphUser>(&body)
+    let graph_response = match status {
+        StatusCode::OK => serde_json::from_str::<GraphUserSearchResponse>(&body)
             .map_err(|e| EntraError::Deserialize(e.to_string()))?,
         StatusCode::UNAUTHORIZED => return Err(EntraError::Unauthorized),
         StatusCode::FORBIDDEN => return Err(EntraError::Forbidden),
@@ -42,6 +43,10 @@ pub async fn get_user_from_employee_id(
             });
         }
     };
+    let user = graph_response.value.first();
 
-    Ok(user)
+    match user {
+        Some(user) => Ok(user.to_owned()),
+        None => Err(EntraError::NoSuchEmployeeId(employee_id.to_string())),
+    }
 }

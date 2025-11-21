@@ -16,4 +16,6 @@ pub enum EntraError {
     Obo(String),
     #[error("missing env var: {0}")]
     MissingEnv(String),
+    #[error("could not find user with given employee_id")]
+    NoSuchEmployeeId(String),
 }

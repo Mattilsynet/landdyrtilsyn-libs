@@ -31,6 +31,15 @@ pub struct GraphUser {
     pub photo: Option<String>,
 }
 
+#[derive(Debug, Deserialize, Clone)]
+pub struct GraphUserSearchResponse {
+    #[serde(rename = "@odata.context")]
+    pub odata_context: Option<String>,
+    #[serde(rename = "@odata.count")]
+    pub odata_count: Option<u32>,
+    pub value: Vec<GraphUser>,
+}
+
 #[derive(Debug, Clone)]
 pub(crate) struct OboConfig {
     pub tenant_id: String,
