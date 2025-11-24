@@ -1,21 +1,59 @@
 use std::{fmt, str::FromStr};
 
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct SakResponse {
     pub sakstittel: String,
     pub saksbehandler: String,
     pub saksstatus: String,
     pub unntatt_offentlighet: bool,
-    pub saksnr: String,
+    pub saksnr: Saksnummer,
     pub lukket: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+pub struct HentSakRequest {
+    pub key: SakKey,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+pub enum SakKey {
+    SkuffenId(Uuid),
+    ArkivId(Saksnummer),
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+pub enum Saksstatus {
+    UnderBehandling,
+    Ferdig,
+    Avsluttet,
+}
+
+impl Saksstatus {
+    pub fn code(self) -> char {
+        match self {
+            Saksstatus::UnderBehandling => 'B',
+            Saksstatus::Ferdig => 'F',
+            Saksstatus::Avsluttet => 'A',
+        }
+    }
+
+    pub fn from_code(c: char) -> Option<Self> {
+        match c {
+            'B' => Some(Self::UnderBehandling),
+            'F' => Some(Self::Ferdig),
+            'A' => Some(Self::Avsluttet),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct Saksnummer(String);
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub enum SaksnummerError {
     InvalidFormat,
     InvalidYear(u16),
