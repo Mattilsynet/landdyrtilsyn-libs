@@ -158,6 +158,12 @@ pub enum Journalpoststatus {
     Journalført,
 }
 
+impl JournalpostId {
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
 impl Journalpoststatus {
     pub fn code(self) -> char {
         match self {
