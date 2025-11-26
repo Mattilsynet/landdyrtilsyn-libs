@@ -7,3 +7,10 @@ pub enum Query {
     HentSak { saksnummer: Saksnummer },
     HentJournalpost { journalpost_id: JournalpostId },
 }
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+pub enum QueryResponse {
+    Sak {},
+    Journalpost {},
+    Error {},
+}

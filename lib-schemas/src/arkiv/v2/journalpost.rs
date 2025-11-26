@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use crate::typer::{organisasjonsnummer::Organisasjonsnummer, personnummer::Personnummer};
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct JournalpostId(String);
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
@@ -40,6 +40,17 @@ pub struct JournalpostCommon {
     pub journalpost_id: i32,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub kildesystem: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+pub struct HentJournalpostRequest {
+    pub key: JournalpostKey,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+pub enum JournalpostKey {
+    SkuffenId(Uuid),
+    ArkivId(JournalpostId),
 }
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
@@ -145,6 +156,12 @@ pub enum Journalpoststatus {
     Ferdig,
     Ekspedert,
     Journalført,
+}
+
+impl JournalpostId {
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
 }
 
 impl Journalpoststatus {
