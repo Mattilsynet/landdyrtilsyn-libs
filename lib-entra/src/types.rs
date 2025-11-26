@@ -11,7 +11,7 @@ pub struct GraphUserMemberOf {
 pub(crate) const GRAPH_USER_SELECT_FIELDS: &str =
     "id,displayName,mail,userPrincipalName,givenName,surname,jobTitle,employeeId";
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct GraphUser {
     pub id: Option<String>,
     #[serde(rename = "displayName")]
