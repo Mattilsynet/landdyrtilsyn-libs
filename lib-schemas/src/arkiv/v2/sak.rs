@@ -3,6 +3,8 @@ use std::{fmt, str::FromStr};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use crate::arkiv::v2::journalpost::JournalpostResponse;
+
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct SakResponse {
     pub sakstittel: String,
@@ -11,6 +13,18 @@ pub struct SakResponse {
     pub unntatt_offentlighet: bool,
     pub saksnr: Saksnummer,
     pub lukket: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SakMedJournalposterResponse {
+    pub sakstittel: String,
+    pub saksbehandler: String,
+    pub saksstatus: String,
+    pub unntatt_offentlighet: bool,
+    pub saksnr: String,
+    pub kildesystem: String,
+    pub lukket: bool,
+    pub journalposter: Vec<JournalpostResponse>,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
@@ -55,20 +69,20 @@ pub struct Saksnummer(String);
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub enum SaksnummerError {
-    InvalidFormat,
-    InvalidYear(u16),
-    MissingSequence,
+    UgyldigFormat,
+    UgyldigÅr(u16),
+    ManglerSekvensnummer,
 }
 
 impl fmt::Display for SaksnummerError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
-            SaksnummerError::InvalidFormat => write!(f, "must be formatted as <YYYY>/<seq>"),
-            SaksnummerError::InvalidYear(y) => write!(
+            SaksnummerError::UgyldigFormat => write!(f, "must be formatted as <YYYY>/<seq>"),
+            SaksnummerError::UgyldigÅr(y) => write!(
                 f,
                 "invalid year {y}; expected a 4-digit year in [1000, 9999]"
             ),
-            SaksnummerError::MissingSequence => write!(f, "missing sequence after slash"),
+            SaksnummerError::ManglerSekvensnummer => write!(f, "missing sequence after slash"),
         }
     }
 }
@@ -80,11 +94,11 @@ impl Saksnummer {
     /// The result will be formatted as "YYYY/<seq>"
     pub fn new_from_parts(year: u16, sequence: impl AsRef<str>) -> Result<Self, SaksnummerError> {
         if !(1000..=9999).contains(&year) {
-            return Err(SaksnummerError::InvalidYear(year));
+            return Err(SaksnummerError::UgyldigÅr(year));
         }
         let seq = sequence.as_ref();
         if seq.is_empty() {
-            return Err(SaksnummerError::MissingSequence);
+            return Err(SaksnummerError::ManglerSekvensnummer);
         }
         Ok(Self(format!("{year}/{seq}")))
     }
@@ -96,25 +110,25 @@ impl Saksnummer {
         let s = s.into();
         let parts: Vec<&str> = s.splitn(2, '/').collect();
         if parts.len() != 2 {
-            return Err(SaksnummerError::InvalidFormat);
+            return Err(SaksnummerError::UgyldigFormat);
         }
 
         let year_str = parts[0];
         let seq_str = parts[1];
 
         if year_str.len() != 4 || !year_str.chars().all(|c| c.is_ascii_digit()) {
-            return Err(SaksnummerError::InvalidFormat);
+            return Err(SaksnummerError::UgyldigFormat);
         }
 
         let year: u16 = year_str
             .parse()
-            .map_err(|_| SaksnummerError::InvalidFormat)?;
+            .map_err(|_| SaksnummerError::UgyldigFormat)?;
         if !(1000..=9999).contains(&year) {
-            return Err(SaksnummerError::InvalidYear(year));
+            return Err(SaksnummerError::UgyldigÅr(year));
         }
 
         if seq_str.is_empty() {
-            return Err(SaksnummerError::MissingSequence);
+            return Err(SaksnummerError::ManglerSekvensnummer);
         }
 
         Ok(Self(s))
@@ -162,11 +176,11 @@ mod tests {
     fn from_parts_rejects_invalid_year_or_empty_seq() {
         assert_eq!(
             Saksnummer::new_from_parts(999, "foo").unwrap_err(),
-            SaksnummerError::InvalidYear(999)
+            SaksnummerError::UgyldigÅr(999)
         );
         assert_eq!(
             Saksnummer::new_from_parts(2025, "").unwrap_err(),
-            SaksnummerError::MissingSequence
+            SaksnummerError::ManglerSekvensnummer
         );
     }
 
@@ -187,19 +201,19 @@ mod tests {
     fn from_string_invalid_formats() {
         assert_eq!(
             Saksnummer::new("2025").unwrap_err(),
-            SaksnummerError::InvalidFormat
+            SaksnummerError::UgyldigFormat
         );
         assert_eq!(
             Saksnummer::new("20a5/123").unwrap_err(),
-            SaksnummerError::InvalidFormat
+            SaksnummerError::UgyldigFormat
         );
         assert_eq!(
             Saksnummer::new("2025/").unwrap_err(),
-            SaksnummerError::MissingSequence
+            SaksnummerError::ManglerSekvensnummer
         );
         assert_eq!(
             Saksnummer::new("999/abc").unwrap_err(),
-            SaksnummerError::InvalidYear(999)
+            SaksnummerError::UgyldigÅr(999)
         );
     }
 

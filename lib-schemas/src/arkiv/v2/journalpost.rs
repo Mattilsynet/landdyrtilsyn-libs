@@ -15,13 +15,10 @@ pub struct JournalpostResponse {
     pub journalposttype: JournalpostType,
     pub journalstatus: Journalpoststatus,
     pub unntatt_offentlighet: bool,
-
     pub saksbehandler: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub dokumenter: Option<Vec<Dokument>>,
+    pub dokumenter: Vec<Dokument>,
     pub journalpost_id: i32,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub kildesystem: Option<String>,
+    pub kildesystem: String,
 }
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
