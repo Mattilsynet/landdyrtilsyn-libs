@@ -161,6 +161,31 @@ impl JournalpostId {
     }
 }
 
+impl JournalpostType {
+    pub fn code(self) -> char {
+        match self {
+            JournalpostType::Inngående => 'I',
+            JournalpostType::Utgående => 'U',
+            JournalpostType::InterntNotat => 'X',
+        }
+    }
+
+    pub fn from_string(s: String) -> Option<Self> {
+        let mut chars = s.chars();
+        let c = chars.next()?;
+        if chars.next().is_some() {
+            return None;
+        }
+
+        match c {
+            'I' => Some(Self::Inngående),
+            'U' => Some(Self::Utgående),
+            'X' => Some(Self::InterntNotat),
+            _ => None,
+        }
+    }
+}
+
 impl Journalpoststatus {
     pub fn code(self) -> char {
         match self {
@@ -173,7 +198,13 @@ impl Journalpoststatus {
         }
     }
 
-    pub fn from_code(c: char) -> Option<Self> {
+    pub fn from_string(s: String) -> Option<Self> {
+        let mut chars = s.chars();
+        let c = chars.next()?;
+        if chars.next().is_some() {
+            return None;
+        }
+
         match c {
             'S' => Some(Self::Registrert),
             'R' => Some(Self::Reservert),

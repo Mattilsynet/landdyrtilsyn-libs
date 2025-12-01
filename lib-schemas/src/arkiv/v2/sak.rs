@@ -54,7 +54,12 @@ impl Saksstatus {
         }
     }
 
-    pub fn from_code(c: char) -> Option<Self> {
+    pub fn from_string(s: String) -> Option<Self> {
+        let mut chars = s.chars();
+        let c = chars.next()?;
+        if s.chars().next().is_some() {
+            return None;
+        }
         match c {
             'B' => Some(Self::UnderBehandling),
             'F' => Some(Self::Ferdig),
