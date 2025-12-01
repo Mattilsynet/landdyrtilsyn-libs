@@ -21,7 +21,7 @@ pub struct SakMedJournalposterResponse {
     pub saksbehandler: String,
     pub saksstatus: String,
     pub unntatt_offentlighet: bool,
-    pub saksnr: String,
+    pub saksnr: Saksnummer,
     pub kildesystem: String,
     pub lukket: bool,
     pub journalposter: Vec<JournalpostResponse>,
