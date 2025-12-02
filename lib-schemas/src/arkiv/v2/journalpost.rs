@@ -1,3 +1,4 @@
+use anyhow::{Result, bail};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -170,19 +171,14 @@ impl JournalpostType {
         }
     }
 
-    pub fn from_string(s: String) -> Option<Self> {
-        let mut chars = s.chars();
-        let c = chars.next()?;
-        if chars.next().is_some() {
-            return None;
-        }
-
-        match c {
-            'I' => Some(Self::Inngående),
-            'U' => Some(Self::Utgående),
-            'X' => Some(Self::InterntNotat),
-            _ => None,
-        }
+    pub fn from_char(c: char) -> Result<Self> {
+        let journalpost_type = match c {
+            'I' => Self::Inngående,
+            'U' => Self::Utgående,
+            'X' => Self::InterntNotat,
+            _ => bail!("Ukjent JournalpostType: {c}"),
+        };
+        Ok(journalpost_type)
     }
 }
 
@@ -198,21 +194,16 @@ impl Journalpoststatus {
         }
     }
 
-    pub fn from_string(s: String) -> Option<Self> {
-        let mut chars = s.chars();
-        let c = chars.next()?;
-        if chars.next().is_some() {
-            return None;
-        }
-
-        match c {
-            'S' => Some(Self::Registrert),
-            'R' => Some(Self::Reservert),
-            'M' => Some(Self::Midlertidig),
-            'F' => Some(Self::Ferdig),
-            'E' => Some(Self::Ekspedert),
-            'J' => Some(Self::Journalført),
-            _ => None,
-        }
+    pub fn from_char(c: char) -> Result<Self> {
+        let journalpoststatus = match c {
+            'S' => Self::Registrert,
+            'R' => Self::Reservert,
+            'M' => Self::Midlertidig,
+            'F' => Self::Ferdig,
+            'E' => Self::Ekspedert,
+            'J' => Self::Journalført,
+            _ => bail!("Ukjent Journalpoststatus: {c}"),
+        };
+        Ok(journalpoststatus)
     }
 }

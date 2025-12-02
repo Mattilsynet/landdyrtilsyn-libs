@@ -1,6 +1,6 @@
-use std::{fmt, str::FromStr};
-
+use anyhow::{Result, bail};
 use serde::{Deserialize, Serialize};
+use std::{fmt, str::FromStr};
 use uuid::Uuid;
 
 use crate::arkiv::v2::journalpost::JournalpostResponse;
@@ -54,18 +54,14 @@ impl Saksstatus {
         }
     }
 
-    pub fn from_string(s: String) -> Option<Self> {
-        let mut chars = s.chars();
-        let c = chars.next()?;
-        if s.chars().next().is_some() {
-            return None;
-        }
-        match c {
-            'B' => Some(Self::UnderBehandling),
-            'F' => Some(Self::Ferdig),
-            'A' => Some(Self::Avsluttet),
-            _ => None,
-        }
+    pub fn from_char(c: char) -> Result<Self> {
+        let saksstatus = match c {
+            'B' => Self::UnderBehandling,
+            'F' => Self::Ferdig,
+            'A' => Self::Avsluttet,
+            _ => bail!("Ukjent saksstatus: {c}"),
+        };
+        Ok(saksstatus)
     }
 }
 
