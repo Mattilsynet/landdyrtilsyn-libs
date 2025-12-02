@@ -5,7 +5,7 @@ use uuid::Uuid;
 pub struct DokumentResponse {
     pub tittel: String,
     pub filtype: String,
-    pub dokument_referanse: Uuid,
+    pub dokument_referanse: Option<Uuid>,
 }
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
