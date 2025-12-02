@@ -3,7 +3,10 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::typer::{organisasjonsnummer::Organisasjonsnummer, personnummer::Personnummer};
+use crate::{
+    arkiv::v2::dokument::{Dokument, DokumentResponse},
+    typer::{organisasjonsnummer::Organisasjonsnummer, personnummer::Personnummer},
+};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct JournalpostId(String);
@@ -17,7 +20,7 @@ pub struct JournalpostResponse {
     pub journalstatus: Journalpoststatus,
     pub unntatt_offentlighet: bool,
     pub saksbehandler: String,
-    pub dokumenter: Vec<Dokument>,
+    pub dokumenter: Vec<DokumentResponse>,
     pub journalpost_id: i32,
     pub kildesystem: String,
 }
@@ -79,13 +82,6 @@ pub struct OpprettInngåendeJurnalpost {
 pub struct OpprettInterntNotatJurnalpost {
     #[serde(flatten)]
     pub felles: JournalpostCommon,
-}
-
-#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
-pub struct Dokument {
-    pub tittel: String,
-    pub filtype: String,
-    pub dokument_referanse: Uuid,
 }
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
