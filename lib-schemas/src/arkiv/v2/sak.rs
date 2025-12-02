@@ -9,7 +9,7 @@ use crate::arkiv::v2::journalpost::JournalpostResponse;
 pub struct SakResponse {
     pub sakstittel: String,
     pub saksbehandler: String,
-    pub saksstatus: String,
+    pub saksstatus: Saksstatus,
     pub unntatt_offentlighet: bool,
     pub saksnr: Saksnummer,
     pub lukket: bool,
@@ -19,7 +19,7 @@ pub struct SakResponse {
 pub struct SakMedJournalposterResponse {
     pub sakstittel: String,
     pub saksbehandler: String,
-    pub saksstatus: String,
+    pub saksstatus: Saksstatus,
     pub unntatt_offentlighet: bool,
     pub saksnr: Saksnummer,
     pub kildesystem: String,
