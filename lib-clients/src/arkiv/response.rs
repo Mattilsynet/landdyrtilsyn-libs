@@ -1,8 +1,14 @@
-use crate::arkiv::{add_jens_suffix, remove_jens_suffix};
+use crate::arkiv::{
+    add_jens_suffix,
+    model::{
+        Landkode, SaksTittel, Saksaar,
+        sak::{NySak, Sak},
+        tilgangshjemmel::Tilgangshjemmel,
+        tilgangskoder::Tilgangskode,
+    },
+    remove_jens_suffix,
+};
 use core::fmt;
-use lib_schemas::arkiv::{Landkode, SaksTittel, Saksaar, sak::NySak};
-use lib_schemas::sak::Sak;
-use lib_schemas::{Tilgangshjemmel, Tilgangskode};
 use serde::{Deserialize, Deserializer, Serialize};
 
 /**

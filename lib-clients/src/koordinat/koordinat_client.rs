@@ -62,8 +62,7 @@ impl KoordinatClient {
             let error_text = response.text().await.unwrap_or_default();
             tracing::error!("Geonorge API returned error {}: {}", status, error_text);
             return Err(GeonorgeError::ApiError(format!(
-                "API returned status {}: {}",
-                status, error_text
+                "API returned status {status}: {error_text}"
             )));
         }
 
@@ -115,8 +114,7 @@ impl KoordinatClient {
             let error_text = response.text().await.unwrap_or_default();
             tracing::error!("Geonorge API returned error {}: {}", status, error_text);
             return Err(GeonorgeError::ApiError(format!(
-                "API returned status {}: {}",
-                status, error_text
+                "API returned status {status}: {error_text}"
             )));
         }
 

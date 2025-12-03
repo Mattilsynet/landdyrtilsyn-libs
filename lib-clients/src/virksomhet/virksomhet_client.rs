@@ -2,10 +2,12 @@ use crate::client::ApiClient;
 use crate::error::ApiError;
 use crate::virksomhet::response::{Underenhet, Virksomhet};
 
+#[allow(dead_code)]
 pub struct VirksomhetClient {
     api_client: ApiClient,
 }
 
+#[allow(dead_code)]
 impl VirksomhetClient {
     pub async fn new() -> Self {
         VirksomhetClient {

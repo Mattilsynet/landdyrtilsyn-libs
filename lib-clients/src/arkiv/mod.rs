@@ -1,4 +1,5 @@
 pub mod arkiv_client;
+pub mod model;
 pub mod response;
 
 pub fn remove_jens_suffix(value: String) -> String {

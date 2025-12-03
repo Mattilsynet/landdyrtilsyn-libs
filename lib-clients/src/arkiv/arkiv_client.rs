@@ -1,3 +1,4 @@
+use crate::arkiv::model::sak::{NySak, Sak};
 use crate::arkiv::response::{
     ArkivClientJournalpost, ArkivClientSak, ArkivPdfKvittering, ArkivSakArkivering,
     ArkiverDokument, Dokument,
@@ -5,7 +6,6 @@ use crate::arkiv::response::{
 use crate::client::ApiClient;
 use crate::error::ApiError;
 use crate::error::Result;
-use lib_schemas::arkiv::sak::{NySak, Sak};
 use reqwest::header::{ACCEPT, CONTENT_TYPE, HeaderMap};
 use serde::Deserialize;
 use tracing::{error, info};
