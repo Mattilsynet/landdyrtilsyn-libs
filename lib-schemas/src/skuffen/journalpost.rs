@@ -1,10 +1,10 @@
-use anyhow::{Result, bail};
+use crate::error::{Result, SchemasError};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
-    arkiv::v2::dokument::{Dokument, DokumentResponse},
+    skuffen::dokument::{Dokument, DokumentResponse},
     typer::{organisasjonsnummer::Organisasjonsnummer, personnummer::Personnummer},
 };
 
@@ -44,44 +44,9 @@ pub struct JournalpostCommon {
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
-pub struct HentJournalpostRequest {
-    pub key: JournalpostKey,
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub enum JournalpostKey {
     SkuffenId(Uuid),
     ArkivId(JournalpostId),
-}
-
-#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
-pub struct OpprettUgåendeJurnalpost {
-    #[serde(flatten)]
-    pub felles: JournalpostCommon,
-    avsender: Option<String>,
-    mottaker: String,
-}
-
-#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
-pub struct OpprettUgåendeJurnalpostMedUtsending {
-    #[serde(flatten)]
-    pub felles: JournalpostCommon,
-    avsender: Option<String>,
-    mottaker: Vec<UtsendingMottaker>,
-}
-
-#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
-pub struct OpprettInngåendeJurnalpost {
-    #[serde(flatten)]
-    pub felles: JournalpostCommon,
-    avsender: String,
-    mottaker: Option<String>,
-}
-
-#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
-pub struct OpprettInterntNotatJurnalpost {
-    #[serde(flatten)]
-    pub felles: JournalpostCommon,
 }
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
@@ -172,7 +137,11 @@ impl JournalpostType {
             'I' => Self::Inngående,
             'U' => Self::Utgående,
             'X' => Self::InterntNotat,
-            _ => bail!("Ukjent JournalpostType: {c}"),
+            _ => {
+                return Err(SchemasError::ParseError(
+                    format!("Ukjent JournalpostType: {c}").into(),
+                ));
+            }
         };
         Ok(journalpost_type)
     }
@@ -198,7 +167,11 @@ impl Journalpoststatus {
             'F' => Self::Ferdig,
             'E' => Self::Ekspedert,
             'J' => Self::Journalført,
-            _ => bail!("Ukjent Journalpoststatus: {c}"),
+            _ => {
+                return Err(SchemasError::ParseError(
+                    format!("Ukjent Journalpoststatus: {c}").into(),
+                ));
+            }
         };
         Ok(journalpoststatus)
     }
