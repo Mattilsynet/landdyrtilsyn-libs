@@ -40,19 +40,14 @@ impl TilsynskvitteringClient {
         let mut headers = HeaderMap::new();
         headers.insert(CONTENT_TYPE, "application/json".parse().unwrap());
 
-        let response = self
+        let request = self
             .api_client
             .get_client()
             .post(url)
             .bearer_auth(self.api_client.get_token().await)
             .headers(headers)
-            .json(&tilsynsobjekt_ids)
-            .send()
-            .await
-            .map_err(|e| ApiError::ClientError {
-                resource: "reqwest".to_string(),
-                error_message: e.to_string(),
-            })?;
+            .json(&tilsynsobjekt_ids);
+        let response = self.api_client.send_request_with_refresh(request).await?;
         info!("Response: {:?}", response);
 
         if response.status().is_success() {

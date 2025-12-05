@@ -3,7 +3,9 @@ use crate::config::ClientConfiguration;
 use crate::error::ApiError;
 use reqwest::Response;
 use reqwest_middleware::reqwest::Client;
-use reqwest_middleware::{ClientBuilder as MiddlewareClientBuilder, ClientWithMiddleware};
+use reqwest_middleware::{
+    ClientBuilder as MiddlewareClientBuilder, ClientWithMiddleware, RequestBuilder,
+};
 use reqwest_retry::{RetryTransientMiddleware, policies::ExponentialBackoff};
 use secrecy::ExposeSecret;
 use std::env;
@@ -147,6 +149,57 @@ impl ApiClient {
                 resource: "reqwest".to_string(),
                 error_message: e.to_string(),
             })?;
+        Ok(response)
+    }
+
+    pub async fn refresh_token(&self) -> String {
+        let token_provider = &self.token_provider;
+        let (value, expires_at) = TokenProvider::fetch_new_token(
+            &token_provider.client_id,
+            &token_provider.client_secret,
+            &token_provider.auth_url,
+        )
+        .await;
+        {
+            let mut token = token_provider.current_token.write().await;
+            token.value = value.clone();
+            token.expires_at = expires_at;
+        }
+        value
+    }
+
+    pub async fn send_request_with_refresh(
+        &self,
+        mut request: RequestBuilder,
+    ) -> std::result::Result<reqwest::Response, ApiError> {
+        let mut response =
+            request
+                .try_clone()
+                .unwrap()
+                .send()
+                .await
+                .map_err(|e| ApiError::ClientError {
+                    resource: "HTTP Request".to_string(),
+                    error_message: format!("Failed to send request: {}", e),
+                })?;
+
+        if response.status() == reqwest::StatusCode::UNAUTHORIZED
+            || response.status() == reqwest::StatusCode::FORBIDDEN
+        {
+            let new_token = self.refresh_token().await;
+            request = request.bearer_auth(new_token);
+            response = request.send().await.map_err(|e| ApiError::ClientError {
+                resource: "HTTP Request".to_string(),
+                error_message: format!("Failed to send request after token refresh: {}", e),
+            })?;
+            if response.status() == reqwest::StatusCode::UNAUTHORIZED
+                || response.status() == reqwest::StatusCode::FORBIDDEN
+            {
+                return Err(ApiError::AuthError {
+                    error_message: "Authentication failed or token expired after refresh. Please check credentials.".to_string(),
+                });
+            }
+        }
         Ok(response)
     }
 }

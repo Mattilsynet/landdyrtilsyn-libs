@@ -19,4 +19,6 @@ pub enum ApiError {
     },
     #[error("Validation Error error in {0}")]
     ValidationError(String),
+    #[error("Authentication error: {error_message}")]
+    AuthError { error_message: String },
 }

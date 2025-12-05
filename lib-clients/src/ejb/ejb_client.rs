@@ -52,17 +52,12 @@ impl EjbClient {
 
         info!("Henter tilfelle fra url : {:?}", url);
 
-        let response = self
+        let request = self
             .api_client
             .get_client()
             .get(&url)
-            .bearer_auth(self.api_client.get_token().await)
-            .send()
-            .await
-            .map_err(|e| ApiError::ClientError {
-                resource: "reqwest".to_string(),
-                error_message: e.to_string(),
-            })?;
+            .bearer_auth(self.api_client.get_token().await);
+        let response = self.api_client.send_request_with_refresh(request).await?;
 
         let r = response.bytes().await?.clone();
         let raw_json: serde_json::Value =
@@ -126,17 +121,12 @@ impl EjbClient {
 
         info!("Henter begrensinger fra url: {:?}", url);
 
-        let response = self
+        let request = self
             .api_client
             .get_client()
             .get(&url)
-            .bearer_auth(self.api_client.get_token().await)
-            .send()
-            .await
-            .map_err(|e| ApiError::ClientError {
-                resource: "reqwest".to_string(),
-                error_message: e.to_string(),
-            })?;
+            .bearer_auth(self.api_client.get_token().await);
+        let response = self.api_client.send_request_with_refresh(request).await?;
 
         let r = response.bytes().await?.clone();
         let raw_json: serde_json::Value =

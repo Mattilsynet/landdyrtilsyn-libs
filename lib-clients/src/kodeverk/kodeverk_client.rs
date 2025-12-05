@@ -51,14 +51,14 @@ impl KodeverkClient {
         );
         debug!("url : {}", url);
 
-        let client = self.api_client.get_client();
-        let token = self.api_client.get_token().await;
-
-        let response = client
+        let request = self
+            .api_client
+            .get_client()
             .get(&url)
-            .bearer_auth(token)
-            .headers(headers)
-            .send()
+            .bearer_auth(self.api_client.get_token().await);
+        let response = self
+            .api_client
+            .send_request_with_refresh(request)
             .await
             .map_err(|e| KodeverkError::Client(e.to_string()))?;
 

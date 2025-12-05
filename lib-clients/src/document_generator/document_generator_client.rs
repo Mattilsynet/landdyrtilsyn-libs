@@ -34,19 +34,14 @@ impl DokumentGeneratorClient {
         headers.insert(ACCEPT, "application/pdf".parse().unwrap());
         headers.insert(CONTENT_TYPE, "application/json".parse().unwrap());
 
-        let response = self
+        let request = self
             .api_client
             .get_client()
             .post(format!("{}/v2/interntdokument", &self.api_client.get_base_url()).as_str())
             .headers(headers)
             .bearer_auth(self.api_client.get_token().await)
-            .body(json_body)
-            .send()
-            .await
-            .map_err(|e| ApiError::ClientError {
-                resource: "reqwest".to_string(),
-                error_message: e.to_string(),
-            })?;
+            .body(json_body);
+        let response = self.api_client.send_request_with_refresh(request).await?;
 
         let status = response.status();
 
@@ -80,19 +75,14 @@ impl DokumentGeneratorClient {
         headers.insert(ACCEPT, "application/pdf".parse().unwrap());
         headers.insert(CONTENT_TYPE, "application/json".parse().unwrap());
 
-        let response = self
+        let request = self
             .api_client
             .get_client()
             .post(format!("{}/v1/vedlegg", &self.api_client.get_base_url()).as_str())
             .headers(headers)
             .bearer_auth(self.api_client.get_token().await)
-            .body(json_body)
-            .send()
-            .await
-            .map_err(|e| ApiError::ClientError {
-                resource: "reqwest".to_string(),
-                error_message: e.to_string(),
-            })?;
+            .body(json_body);
+        let response = self.api_client.send_request_with_refresh(request).await?;
 
         let status = response.status();
 

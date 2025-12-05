@@ -145,21 +145,21 @@ impl ArkivClient {
     )]
     pub async fn opprett_ny_sak(&self, sak: NySak) -> Result<Sak> {
         let mut headers = HeaderMap::new();
-        headers.insert(CONTENT_TYPE, "application/json".parse().unwrap());
+        headers.insert(
+            CONTENT_TYPE,
+            "application/json".parse().expect("valid header value"),
+        );
 
-        let response = self
+        let request = self
             .api_client
             .get_client()
             .post(format!("{}/arkiv/sakMtEnhet", self.api_client.get_base_url()).as_str())
             .bearer_auth(self.api_client.get_token().await)
             .headers(headers)
-            .json(&ArkivSakArkivering::from(sak))
-            .send()
-            .await
-            .map_err(|e| ApiError::ClientError {
-                resource: "reqwest".to_string(),
-                error_message: e.to_string(),
-            })?;
+            .json(&ArkivSakArkivering::from(sak));
+
+        let response = self.api_client.send_request_with_refresh(request).await?;
+
         info!("Response opprett_arkiv_sak_med_mt_enhet: {:?}", response);
 
         let status = response.status();

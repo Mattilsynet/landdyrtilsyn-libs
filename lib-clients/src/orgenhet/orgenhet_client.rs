@@ -79,11 +79,14 @@ impl OrgEnhetClient {
 
         info!("Henter alle ansatte fra: {:?}", url);
 
-        let response = self.api_client.api_get(&url).await?;
+        let request = self
+            .api_client
+            .get_client()
+            .get(&url)
+            .bearer_auth(self.api_client.get_token().await);
+        let response = self.api_client.send_request_with_refresh(request).await?;
 
         if response.status().is_success() {
-            // let json: serde_json::Value = response.json().await.unwrap();
-            // println!("{:?}", json);
             let ansatt_response: AnsatteResponse = response
                 .json()
                 .await
@@ -116,7 +119,12 @@ impl OrgEnhetClient {
 
         info!("Henter ansatt med brukernavn fra: {:?}", url);
 
-        let response = self.api_client.api_get(&url).await?;
+        let request = self
+            .api_client
+            .get_client()
+            .get(&url)
+            .bearer_auth(self.api_client.get_token().await);
+        let response = self.api_client.send_request_with_refresh(request).await?;
 
         if response.status().is_success() {
             // let json: serde_json::Value = response.json().await.unwrap();
@@ -152,7 +160,12 @@ impl OrgEnhetClient {
 
         info!("Henter ansatte fra: {:?}", url);
 
-        let response = self.api_client.api_get(&url).await?;
+        let request = self
+            .api_client
+            .get_client()
+            .get(&url)
+            .bearer_auth(self.api_client.get_token().await);
+        let response = self.api_client.send_request_with_refresh(request).await?;
 
         if response.status().is_success() {
             let ansatt_response: AnsatteResponse = response
@@ -189,7 +202,12 @@ impl OrgEnhetClient {
 
         info!("Henter ansatte fra: {:?}", url);
 
-        let response = self.api_client.api_get(&url).await?;
+        let request = self
+            .api_client
+            .get_client()
+            .get(&url)
+            .bearer_auth(self.api_client.get_token().await);
+        let response = self.api_client.send_request_with_refresh(request).await?;
 
         if response.status().is_success() {
             let ansatt_response: AnsatteResponse = response
@@ -231,7 +249,12 @@ impl OrgEnhetClient {
 
         info!("Henter org_enhet fra: {:?}", url);
 
-        let response = self.api_client.api_get(&url).await?;
+        let request = self
+            .api_client
+            .get_client()
+            .get(&url)
+            .bearer_auth(self.api_client.get_token().await);
+        let response = self.api_client.send_request_with_refresh(request).await?;
 
         if response.status().is_success() {
             let orgenhet: Orgenhet = response
@@ -264,7 +287,12 @@ impl OrgEnhetClient {
 
         info!("Henter regioner fra: {:?}", url);
 
-        let response = self.api_client.api_get(&url).await?;
+        let request = self
+            .api_client
+            .get_client()
+            .get(&url)
+            .bearer_auth(self.api_client.get_token().await);
+        let response = self.api_client.send_request_with_refresh(request).await?;
 
         if response.status().is_success() {
             let region_response: RegionResponse = response
@@ -297,7 +325,12 @@ impl OrgEnhetClient {
 
         info!("Henter avdelinger fra: {:?}", url);
 
-        let response = self.api_client.api_get(&url).await?;
+        let request = self
+            .api_client
+            .get_client()
+            .get(&url)
+            .bearer_auth(self.api_client.get_token().await);
+        let response = self.api_client.send_request_with_refresh(request).await?;
 
         if response.status().is_success() {
             let avdeling_response: AvdelingResponse = response
@@ -331,7 +364,12 @@ impl OrgEnhetClient {
 
         info!("Henter seksjoner fra: {:?}", url);
 
-        let response = self.api_client.api_get(&url).await?;
+        let request = self
+            .api_client
+            .get_client()
+            .get(&url)
+            .bearer_auth(self.api_client.get_token().await);
+        let response = self.api_client.send_request_with_refresh(request).await?;
 
         if response.status().is_success() {
             let seksjon_response: SeksjonResponse = response
@@ -378,7 +416,12 @@ impl OrgEnhetClient {
             orgenhet_id,
         );
 
-        let response = self.api_client.api_get(&url).await?;
+        let request = self
+            .api_client
+            .get_client()
+            .get(&url)
+            .bearer_auth(self.api_client.get_token().await);
+        let response = self.api_client.send_request_with_refresh(request).await?;
         let status = response.status();
         let response_text = response.text().await.map_err(|e| ApiError::ClientError {
             resource: "reqwest".to_string(),

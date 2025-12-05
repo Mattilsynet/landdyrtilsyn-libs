@@ -22,7 +22,12 @@ impl VirksomhetClient {
             orgnr,
         );
 
-        let response = self.api_client.api_get(&url).await?;
+        let request = self
+            .api_client
+            .get_client()
+            .get(&url)
+            .bearer_auth(self.api_client.get_token().await);
+        let response = self.api_client.send_request_with_refresh(request).await?;
 
         if response.status().is_success() {
             let virksomhet: Virksomhet =
@@ -56,7 +61,12 @@ impl VirksomhetClient {
             orgnr,
         );
 
-        let response = self.api_client.api_get(&url).await?;
+        let request = self
+            .api_client
+            .get_client()
+            .get(&url)
+            .bearer_auth(self.api_client.get_token().await);
+        let response = self.api_client.send_request_with_refresh(request).await?;
 
         if response.status().is_success() {
             let underenheter: Vec<Underenhet> =
