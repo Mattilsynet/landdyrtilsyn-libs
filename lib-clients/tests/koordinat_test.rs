@@ -3,13 +3,13 @@
 
 #[cfg(test)]
 mod integration {
-    use lib_clients::koordinat::KoordinatClient;
+    use lib_clients::geonorge::GeoNorgeClient;
 
     // Run with: cargo test -p lib-clients -- --ignored
     #[ignore]
     #[tokio::test]
     async fn returns_koordinater_for_known_address() {
-        let client = KoordinatClient::new();
+        let client = GeoNorgeClient::new();
 
         let coords = client
             .get_koordinater("Karl Johans gate 1, Oslo")
