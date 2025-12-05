@@ -33,8 +33,6 @@ impl GeoNorgeClient {
             PUNKTSOK_URL, koordinater.latitude, koordinater.longitude
         );
 
-        println!("URL: {:?}", url);
-
         let response = self.client.get(&url).send().await.map_err(|e| {
             tracing::error!("Klarte ikke sende request til GeoNorge");
             GeonorgeError::RequestError(e.to_string())
@@ -61,7 +59,6 @@ impl GeoNorgeClient {
                 GeonorgeError::ParseError(e.to_string())
             })?;
 
-        println!("Response: {:?}", geonorge_response);
         Ok(geonorge_response)
     }
 
