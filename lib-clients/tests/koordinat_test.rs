@@ -1,4 +1,4 @@
-// Live integration test for the Geonorge address API via KoordinatsClient.
+// Live integration test for the Geonorge address API via GeoNorgeClient.
 // This test hits the real API and may be flaky due to network; it's ignored by default.
 
 #[cfg(test)]
