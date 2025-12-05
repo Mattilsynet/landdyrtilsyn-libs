@@ -6,8 +6,8 @@ pub mod config;
 pub mod document_generator;
 pub mod ejb;
 pub mod error;
+pub mod geonorge;
 pub mod kodeverk;
-pub mod koordinat;
 pub mod orgenhet;
 pub mod tilsynskvittering;
 pub mod virksomhet;
@@ -51,8 +51,8 @@ pub use ejb::{
     ejb_client::EjbClient, response_begrensninger::Begrensning, response_tilfeller::Sykdomstilfelle,
 };
 
-#[cfg(feature = "koordinat")]
-pub use koordinat::{
-    koordinat_client::KoordinatClient, response::AddressResult, response::GeonorgeResponse,
+#[cfg(feature = "geonorge")]
+pub use geonorge::{
+    geonorge_client::GeoNorgeClient, response::AddressResult, response::GeonorgeResponse,
     response::Koordinater,
 };

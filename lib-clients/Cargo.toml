@@ -32,6 +32,6 @@ dokument_generator = ["dep:bon"]
 virksomhet = ["dep:bon"]
 tilsynskvittering = ["dep:bon"]
 ejb = ["dep:bon"]
-koordinat = ["dep:bon"]
+geonorge = ["dep:bon"]
 default = []
 
