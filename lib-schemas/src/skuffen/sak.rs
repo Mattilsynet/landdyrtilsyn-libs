@@ -107,10 +107,6 @@ impl Saksnummer {
         let year_str = parts[0];
         let seq_str = parts[1];
 
-        if year_str.len() != 4 || !year_str.chars().all(|c| c.is_ascii_digit()) {
-            return Err(SaksnummerError::UgyldigFormat.into());
-        }
-
         let year: u16 = year_str
             .parse()
             .map_err(|_| SaksnummerError::UgyldigFormat)?;
@@ -160,11 +156,11 @@ mod tests {
     fn from_parts_rejects_invalid_year_or_empty_seq() {
         assert_eq!(
             Saksnummer::new_from_parts(999, "foo").unwrap_err(),
-            SaksnummerError::UgyldigÅr(999)
+            SaksnummerError::UgyldigÅr(999).into()
         );
         assert_eq!(
             Saksnummer::new_from_parts(2025, "").unwrap_err(),
-            SaksnummerError::ManglerSekvensnummer
+            SaksnummerError::ManglerSekvensnummer.into()
         );
     }
 
@@ -177,7 +173,7 @@ mod tests {
         let s = Saksnummer::new("2025/ABC-XYZ").unwrap();
         assert_eq!(s.sequence(), "ABC-XYZ");
 
-        let s = "2025/foo_bar".parse::<Saksnummer>().unwrap();
+        let s = Saksnummer::new("2025/foo_bar").unwrap();
         assert_eq!(s.sequence(), "foo_bar");
     }
 
@@ -185,25 +181,25 @@ mod tests {
     fn from_string_invalid_formats() {
         assert_eq!(
             Saksnummer::new("2025").unwrap_err(),
-            SaksnummerError::UgyldigFormat
+            SaksnummerError::UgyldigFormat.into()
         );
         assert_eq!(
             Saksnummer::new("20a5/123").unwrap_err(),
-            SaksnummerError::UgyldigFormat
+            SaksnummerError::UgyldigFormat.into()
         );
         assert_eq!(
             Saksnummer::new("2025/").unwrap_err(),
-            SaksnummerError::ManglerSekvensnummer
+            SaksnummerError::ManglerSekvensnummer.into()
         );
         assert_eq!(
             Saksnummer::new("999/abc").unwrap_err(),
-            SaksnummerError::UgyldigÅr(999)
+            SaksnummerError::UgyldigÅr(999).into()
         );
     }
 
     #[test]
     fn display_roundtrip() {
-        let s: Saksnummer = "2025/custom-seq".parse().unwrap();
+        let s: Saksnummer = Saksnummer::new("2025/custom-seq").unwrap();
         assert_eq!(s.to_string(), "2025/custom-seq");
     }
 }
