@@ -62,6 +62,66 @@ impl GeoNorgeClient {
         Ok(geonorge_response)
     }
 
+    async fn get_address_object(
+        &self,
+        adresse: &str,
+        postnummer: &str,
+        poststed: &str,
+    ) -> Result<AddressResult> {
+        if adresse.trim().is_empty() {
+            return Err(GeonorgeError::InvalidAddress(
+                "Address cannot be empty".to_string(),
+            ));
+        }
+
+        let url = format!("{}/sok", ADRESSER_URL);
+        let normalized_address = normalize_house_letter(adresse);
+
+        let response = self
+            .client
+            .get(&url)
+            .query(&[
+                ("fuzzy", "false"),
+                ("adressetekst", &normalized_address),
+                ("postnummer", postnummer),
+                ("poststed", poststed),
+                ("treffPerSide", "1"),
+                ("side", "0"),
+            ])
+            .send()
+            .await
+            .map_err(|e| {
+                tracing::error!("Klarte ikke sende request til GeoNorge");
+                GeonorgeError::RequestError(e.to_string())
+            })?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let error_text = response.text().await.unwrap_or_default();
+            tracing::error!("Geonorge API returned error {}: {}", status, error_text);
+            return Err(GeonorgeError::ApiError(format!(
+                "API returned status {}: {}",
+                status, error_text
+            )));
+        }
+
+        let response_text = response.text().await.map_err(|e| {
+            tracing::error!("Failed to read response body: {}", e);
+            GeonorgeError::RequestError(e.to_string())
+        })?;
+
+        let geonorge_response: GeonorgeResponse =
+            serde_json::from_str(&response_text).map_err(|e| {
+                tracing::error!("Failed to parse Geonorge response: {}", e);
+                GeonorgeError::ParseError(e.to_string())
+            })?;
+
+        match geonorge_response.addresses.into_iter().next() {
+            Some(address) => Ok(address),
+            None => Err(GeonorgeError::NoResults(adresse.to_string())),
+        }
+    }
+
     async fn search_address(&self, address: &str) -> Result<Vec<AddressResult>> {
         if address.trim().is_empty() {
             return Err(GeonorgeError::InvalidAddress(
@@ -177,6 +237,18 @@ impl GeoNorgeClient {
         Ok(results.first().and_then(|r| r.get_koordinater()))
     }
 
+    pub async fn get_koordinater_fra_adresse(
+        &self,
+        adresse: &str,
+        postnummer: &str,
+        poststed: &str,
+    ) -> Result<Option<(f64, f64)>> {
+        let results = self
+            .get_address_object(adresse, postnummer, poststed)
+            .await?;
+        Ok(results.get_koordinater())
+    }
+
     pub async fn get_addresse_fra_koordinater(
         &self,
         koordinater: &Koordinater,
@@ -240,4 +312,25 @@ fn normalize_house_letter(s: &str) -> String {
     }
 
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::geonorge::GeoNorgeClient;
+
+    #[tokio::test]
+    async fn test_get_address_object() {
+        let adresse = "Tårnvegen 41";
+        let postnummer = "2380";
+        let poststed = "Brumunddal";
+
+        let geonorge_client = GeoNorgeClient::new();
+        let adresse_obj = geonorge_client
+            .get_address_object(adresse, postnummer, poststed)
+            .await
+            .unwrap();
+        let koordinater = adresse_obj.get_koordinater();
+
+        assert_eq!(koordinater, Some((60.87750554180073, 10.92918075347748)))
+    }
 }
