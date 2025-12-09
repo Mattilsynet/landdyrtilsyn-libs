@@ -16,4 +16,5 @@ pub struct HentJournalpostQuery {
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct HentSakQuery {
     pub key: SakKey,
+    pub inkluder_journalposter: bool,
 }
