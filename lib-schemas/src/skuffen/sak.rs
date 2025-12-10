@@ -19,6 +19,7 @@ pub struct SakResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+#[serde(tag = "type", content = "value", rename_all = "camelCase")]
 pub enum SakKey {
     SkuffenId(Uuid),
     ArkivId(Saksnummer),

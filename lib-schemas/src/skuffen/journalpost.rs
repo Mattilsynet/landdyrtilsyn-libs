@@ -44,6 +44,7 @@ pub struct JournalpostCommon {
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+#[serde(tag = "type", content = "value", rename_all = "camelCase")]
 pub enum JournalpostKey {
     SkuffenId(Uuid),
     ArkivId(JournalpostId),
