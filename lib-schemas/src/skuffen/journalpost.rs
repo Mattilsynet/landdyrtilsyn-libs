@@ -1,5 +1,4 @@
 use crate::error::{Result, SchemasError};
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -29,7 +28,7 @@ pub struct JournalpostResponse {
 #[serde(deny_unknown_fields)]
 pub struct JournalpostCommon {
     pub tittel: String,
-    pub dokument_dato: DateTime<Utc>,
+    pub dokument_dato: String,
     pub journalposttype: JournalpostType,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tilgangskode: Option<String>,
