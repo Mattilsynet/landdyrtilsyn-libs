@@ -15,7 +15,7 @@ pub struct JournalpostId(String);
 #[serde(deny_unknown_fields)]
 pub struct JournalpostResponse {
     pub tittel: String,
-    pub dokument_dato: DateTime<Utc>,
+    pub dokument_dato: String,
     pub journalposttype: JournalpostType,
     pub journalstatus: Journalpoststatus,
     pub unntatt_offentlighet: bool,
