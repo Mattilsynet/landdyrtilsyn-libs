@@ -1,21 +1,95 @@
-use crate::error::{Result, SchemasError};
+use crate::{
+    error::{Result, SchemasError},
+    skuffen::tilgang::Tilgang,
+};
 use serde::{Deserialize, Serialize};
-use std::fmt;
+use std::{fmt, str::FromStr};
 use uuid::Uuid;
 
 use crate::skuffen::journalpost::JournalpostResponse;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SakResponse {
-    pub sakstittel: String,
+    pub sakstittel: Sakstittel, //TODO: Det er egene regler for sakstittel, spesielt ved skjerming. Lag
+    //en en egen type for denne med validering i new()
     pub saksbehandler: String,
     pub saksstatus: Saksstatus,
-    pub unntatt_offentlighet: bool,
+    pub tilgang: Tilgang,
+    pub ordningsverdi: Ordningsverdi,
     pub saksnr: Saksnummer,
     pub kildesystem: String,
     pub lukket: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub journalposter: Option<Vec<JournalpostResponse>>,
+}
+
+/**
+* SaksTittel benyttes på opprettelse av sak i arkiv
+*/
+const SAKSTITTEL_MAX_LENGTH: usize = 256;
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+pub struct Sakstittel(pub String);
+
+impl Sakstittel {
+    pub fn uo_tittel(&self) -> Sakstittel {
+        Sakstittel("*****".to_string())
+    }
+}
+
+impl FromStr for Sakstittel {
+    type Err = SchemasError;
+
+    fn from_str(s: &str) -> Result<Self> {
+        let trimmed = s.trim();
+
+        if trimmed.is_empty() {
+            return Err(SakstittelError::Empty.into());
+        }
+
+        if trimmed.len() > SAKSTITTEL_MAX_LENGTH {
+            return Err(SakstittelError::TooLong.into());
+        }
+
+        Ok(Sakstittel(trimmed.to_string()))
+    }
+}
+
+impl fmt::Display for Sakstittel {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+pub struct Ordningsverdi(String);
+
+impl Ordningsverdi {
+    pub fn new(&self, s: String) -> Result<Self> {
+        // non-empty
+        if s.is_empty() {
+            return Err(SchemasError::ParseError(
+                "string is empty".to_string().into(),
+            ));
+        }
+
+        // only digits or '-'
+        if !s.chars().all(|c| c.is_ascii_digit() || c == '-') {
+            return Err(SchemasError::ParseError(
+                format!("invalid character in '{s}'").into(),
+            ));
+        }
+
+        // max 1 '-'
+        let hyphen_count = s.chars().filter(|&c| c == '-').count();
+        if hyphen_count > 1 {
+            return Err(SchemasError::ParseError(
+                "more than one '-' found".to_string().into(),
+            ));
+        }
+
+        Ok(Ordningsverdi(s))
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
@@ -58,28 +132,6 @@ impl Saksstatus {
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct Saksnummer(String);
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
-pub enum SaksnummerError {
-    UgyldigFormat,
-    UgyldigÅr(u16),
-    ManglerSekvensnummer,
-}
-
-impl fmt::Display for SaksnummerError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match *self {
-            SaksnummerError::UgyldigFormat => write!(f, "must be formatted as <YYYY>/<seq>"),
-            SaksnummerError::UgyldigÅr(y) => write!(
-                f,
-                "invalid year {y}; expected a 4-digit year in [1000, 9999]"
-            ),
-            SaksnummerError::ManglerSekvensnummer => write!(f, "missing sequence after slash"),
-        }
-    }
-}
-
-impl std::error::Error for SaksnummerError {}
 
 impl Saksnummer {
     /// Construct from separate year and sequence parts.
@@ -204,3 +256,45 @@ mod tests {
         assert_eq!(s.to_string(), "2025/custom-seq");
     }
 }
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+pub enum SakstittelError {
+    Empty,
+    TooLong,
+}
+
+impl fmt::Display for SakstittelError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match *self {
+            SakstittelError::Empty => write!(f, "Sakstittel er tom."),
+            SakstittelError::TooLong => write!(
+                f,
+                "Sakstittel er for lang. Max lengde: {SAKSTITTEL_MAX_LENGTH}"
+            ),
+        }
+    }
+}
+
+impl std::error::Error for SakstittelError {}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+pub enum SaksnummerError {
+    UgyldigFormat,
+    UgyldigÅr(u16),
+    ManglerSekvensnummer,
+}
+
+impl fmt::Display for SaksnummerError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match *self {
+            SaksnummerError::UgyldigFormat => write!(f, "must be formatted as <YYYY>/<seq>"),
+            SaksnummerError::UgyldigÅr(y) => write!(
+                f,
+                "invalid year {y}; expected a 4-digit year in [1000, 9999]"
+            ),
+            SaksnummerError::ManglerSekvensnummer => write!(f, "missing sequence after slash"),
+        }
+    }
+}
+
+impl std::error::Error for SaksnummerError {}

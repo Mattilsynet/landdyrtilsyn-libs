@@ -1,4 +1,7 @@
-use crate::error::{Result, SchemasError};
+use crate::{
+    error::{Result, SchemasError},
+    skuffen::tilgang::Tilgang,
+};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -14,7 +17,7 @@ pub struct JournalpostId(String);
 #[serde(deny_unknown_fields)]
 pub struct JournalpostResponse {
     pub tittel: String,
-    pub dokument_dato: String,
+    pub dokument_dato: String, //TODO: Denne skal være datetime
     pub journalposttype: JournalpostType,
     pub journalstatus: Journalpoststatus,
     pub unntatt_offentlighet: bool,
@@ -30,14 +33,12 @@ pub struct JournalpostCommon {
     pub tittel: String,
     pub dokument_dato: String,
     pub journalposttype: JournalpostType,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub tilgangskode: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub tilgangshjemmel: Option<String>,
     pub saksbehandler: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tilgang: Option<Tilgang>,
     pub saksbehandler_enhet: String,
     pub dokumenter: Vec<Dokument>,
-    pub journalpost_id: i32,
+    // pub journalpost_id: i32,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub kildesystem: Option<String>,
 }
