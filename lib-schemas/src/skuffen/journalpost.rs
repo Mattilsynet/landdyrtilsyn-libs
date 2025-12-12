@@ -20,7 +20,7 @@ pub struct JournalpostResponse {
     pub dokument_dato: String, //TODO: Denne skal være datetime
     pub journalposttype: JournalpostType,
     pub journalstatus: Journalpoststatus,
-    pub unntatt_offentlighet: bool,
+    pub tilgang: Option<Tilgang>,
     pub saksbehandler: String,
     pub dokumenter: Vec<DokumentResponse>,
     pub journalpost_id: i32,
