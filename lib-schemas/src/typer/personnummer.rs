@@ -26,14 +26,14 @@ impl Personnummer {
         // k1-sjekk: 10 første sifre
         let weights1 = [3, 7, 6, 1, 8, 9, 4, 5, 2, 1];
         let sum1: u32 = weights1.iter().zip(d.iter()).map(|(w, d)| w * d).sum();
-        if sum1 % 11 != 0 {
+        if !sum1.is_multiple_of(11) {
             return false;
         }
 
         // k2-sjekk: alle 11 sifre
         let weights2 = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2, 1];
         let sum2: u32 = weights2.iter().zip(d.iter()).map(|(w, d)| w * d).sum();
-        if sum2 % 11 != 0 {
+        if !sum2.is_multiple_of(11) {
             return false;
         }
 
