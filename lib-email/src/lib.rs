@@ -1,5 +1,5 @@
 use crate::types::{Body, Email, EmailAddress, Message, Recipient};
-use lib_nats::Client;
+use lib_nats::{Client, jetstream::context::RequestError};
 
 pub mod types;
 
@@ -14,7 +14,7 @@ pub async fn send_formatted_email(
     email_subject: String,
     content_header: String,
     content_body: String,
-) {
+) -> Result<(), RequestError> {
     let email_body = compose_html(content_header, content_body);
     let message = Message {
         subject: email_subject,
@@ -38,19 +38,18 @@ pub async fn send_formatted_email(
         message: Some(message),
     };
 
-    send_email(email, nats_client).await;
+    send_email(email, nats_client).await
 }
 
 #[tracing::instrument(name = "Sender epost til ansatt", skip(nats_client, email))]
-async fn send_email(email: Email, nats_client: Client) {
+async fn send_email(email: Email, nats_client: Client) -> Result<(), RequestError> {
     let nats_subject = "map-mailer".to_string();
     let payload = serde_json::to_vec(&email).expect("Failed to serialize email to JSON");
     match nats_client.request(nats_subject, payload.into()).await {
-        Ok(_response) => {}
-        Err(_e) => {
-            tracing::error!("Failed to send email via NATS");
-            // Send melding på slack
-            // TODO
+        Ok(_response) => Ok(()),
+        Err(e) => {
+            tracing::error!("Failed to send email via NATS: {e}");
+            Err(e.into())
         }
     }
 }
