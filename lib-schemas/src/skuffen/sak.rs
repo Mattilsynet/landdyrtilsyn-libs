@@ -16,7 +16,7 @@ pub struct SakResponse {
     pub saksstatus: Saksstatus,
     pub tilgang: Tilgang,
     pub ordningsverdi: Ordningsverdi,
-    pub sak_key: SakKey,
+    pub sak_key: SakKeyResponse,
     pub kildesystem: String,
     pub lukket: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -107,10 +107,10 @@ impl Ordningsverdi {
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
-#[serde(tag = "type", content = "value", rename_all = "camelCase")]
-pub enum SakKey {
-    SkuffenId(Uuid),
-    ArkivId(Saksnummer),
+#[serde(rename_all = "camelCase")]
+pub struct SakKeyResponse {
+    skuffen_id: Uuid,
+    arkiv_id: Saksnummer,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
