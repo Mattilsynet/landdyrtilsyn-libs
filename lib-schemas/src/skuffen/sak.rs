@@ -55,6 +55,20 @@ impl FromStr for Sakstittel {
     }
 }
 
+impl TryFrom<&str> for Sakstittel {
+    type Error = SchemasError;
+    fn try_from(value: &str) -> Result<Self> {
+        value.parse()
+    }
+}
+
+impl TryFrom<String> for Sakstittel {
+    type Error = SchemasError;
+    fn try_from(value: String) -> Result<Self> {
+        value.as_str().parse()
+    }
+}
+
 impl fmt::Display for Sakstittel {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
