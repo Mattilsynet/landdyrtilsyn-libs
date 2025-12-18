@@ -87,16 +87,11 @@ pub struct Response {
     pub sequence_number: u64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum Status {
+    #[default]
     StatusUnspecified,
     StatusSuccess,
     StatusError,
-}
-
-impl Default for Status {
-    fn default() -> Self {
-        Status::StatusUnspecified
-    }
 }
