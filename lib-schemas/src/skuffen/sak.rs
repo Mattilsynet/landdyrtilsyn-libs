@@ -14,7 +14,7 @@ pub struct SakResponse {
     //en en egen type for denne med validering i new()
     pub saksbehandler: String,
     pub saksstatus: Saksstatus,
-    pub tilgang: Tilgang,
+    pub tilgang: Option<Tilgang>,
     pub ordningsverdi: Ordningsverdi,
     pub sak_key: SakKeyResponse,
     pub kildesystem: String,
