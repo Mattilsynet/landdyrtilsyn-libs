@@ -8,4 +8,4 @@ serde = { workspace = true, features = ["derive"] }
 thiserror = { workspace = true }
 serde_json = { workspace = true }
 tracing = { workspace = true }
-lib-nats = { git = "https://github.com/Mattilsynet/landdyrtilsyn-libs.git", tag = "1.4.4" }
+lib-nats = { path = "../lib-nats" }
