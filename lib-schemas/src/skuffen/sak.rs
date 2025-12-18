@@ -16,7 +16,7 @@ pub struct SakResponse {
     pub saksstatus: Saksstatus,
     pub tilgang: Tilgang,
     pub ordningsverdi: Ordningsverdi,
-    pub saksnr: Saksnummer,
+    pub sak_key: SakKey,
     pub kildesystem: String,
     pub lukket: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
