@@ -68,7 +68,7 @@ async fn fetch_jwks(jwks_url: &str) -> Result<JwkSet> {
 impl TokenValidator {
     pub async fn new(config: AuthConfig) -> Result<Self> {
         let jwks_url = config.get_jwks_url().to_owned();
-        let jwk_set = fetch_jwks(&jwks_url).await.map_err(|error| error)?;
+        let jwk_set = fetch_jwks(&jwks_url).await?;
 
         Ok(Self {
             config: Arc::new(config),
@@ -77,7 +77,7 @@ impl TokenValidator {
     }
 
     pub async fn from_env() -> Result<Self> {
-        Ok(Self::new(AuthConfig::from_env()?).await?)
+        Self::new(AuthConfig::from_env()?).await
     }
 
     async fn verify_token(&self, token: &SecretString) -> Result<TokenData<Claims>> {
@@ -212,5 +212,5 @@ pub fn extract_bearer_token<B>(req: &Request<B>) -> Option<SecretString> {
         .get(axum::http::header::AUTHORIZATION)
         .and_then(|header| header.to_str().ok())
         .and_then(|auth_str| auth_str.strip_prefix("Bearer "))
-        .map(|token| SecretString::from(token))
+        .map(SecretString::from)
 }
