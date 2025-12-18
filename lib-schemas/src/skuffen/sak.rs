@@ -109,8 +109,8 @@ impl Ordningsverdi {
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SakKeyResponse {
-    skuffen_id: Uuid,
-    arkiv_id: Option<Saksnummer>,
+    pub skuffen_id: Uuid,
+    pub arkiv_id: Option<Saksnummer>,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
