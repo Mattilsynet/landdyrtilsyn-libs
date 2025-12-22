@@ -79,7 +79,7 @@ impl fmt::Display for Sakstittel {
 pub struct Ordningsverdi(String);
 
 impl Ordningsverdi {
-    pub fn new(&self, s: String) -> Result<Self> {
+    pub fn new(s: String) -> Result<Self> {
         // non-empty
         if s.is_empty() {
             return Err(SchemasError::ParseError(
