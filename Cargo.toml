@@ -13,7 +13,7 @@ secrecy = "0.10.3"
 tracing = "0.1.43"
 thiserror = "2.0.17"
 
-reqwest = { version = "0.12.26", features = ["json", "rustls-tls"]}
+reqwest = { version = "0.13.1", features = ["json", "rustls-tls"]}
 reqwest-retry = "0.8.0"
 reqwest-middleware = { version = "0.4.2", features = ["json", "rustls-tls"] }
 
