@@ -1,10 +1,13 @@
-use crate::skuffen::command::journalpost::{
-    OpprettInngåendeJurnalpost, OpprettInterntNotatJurnalpost, OpprettUgåendeJurnalpost,
+use crate::skuffen::command::{
+    journalpost::{
+        OpprettInngåendeJurnalpost, OpprettInterntNotatJurnalpost, OpprettUgåendeJurnalpost,
+    },
+    sak::OpprettSak,
 };
 
 #[derive(Debug)]
 pub enum Kommando {
-    OpprettSak, //TODO
+    OpprettSak(OpprettSak),
     OpprettInngåendeJournalpost(OpprettInngåendeJurnalpost),
     OpprettUtgåendeJournalpost(OpprettUgåendeJurnalpost),
     OpprettInterntNotatJournalpost(OpprettInterntNotatJurnalpost),

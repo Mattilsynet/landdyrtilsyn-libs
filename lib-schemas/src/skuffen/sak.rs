@@ -10,8 +10,7 @@ use crate::skuffen::journalpost::JournalpostResponse;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SakResponse {
-    pub sakstittel: Sakstittel, //TODO: Det er egene regler for sakstittel, spesielt ved skjerming. Lag
-    //en en egen type for denne med validering i new()
+    pub sakstittel: Sakstittel,
     pub saksbehandler: String,
     pub saksstatus: Saksstatus,
     pub tilgang: Option<Tilgang>,
