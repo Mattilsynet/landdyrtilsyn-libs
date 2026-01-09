@@ -1,3 +1,6 @@
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+
 use crate::skuffen::{
     command::{
         journalpost::{
@@ -15,4 +18,11 @@ pub enum Kommando {
     OpprettUtgåendeJournalpost(OpprettUgåendeJournalpost),
     OpprettInterntNotatJournalpost(OpprettInterntNotatJournalpost),
     AvsluttSak(SakKey),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CommandEnvelope<T> {
+    pub command_id: Uuid,
+    pub correlation_id: Option<Uuid>,
+    pub payload: T,
 }
