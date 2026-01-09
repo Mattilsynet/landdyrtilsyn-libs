@@ -1,14 +1,18 @@
-use crate::skuffen::command::{
-    journalpost::{
-        OpprettInngåendeJurnalpost, OpprettInterntNotatJurnalpost, OpprettUgåendeJurnalpost,
+use crate::skuffen::{
+    command::{
+        journalpost::{
+            OpprettInngåendeJournalpost, OpprettInterntNotatJournalpost, OpprettUgåendeJournalpost,
+        },
+        sak::OpprettSak,
     },
-    sak::OpprettSak,
+    query::queries::SakKey,
 };
 
 #[derive(Debug)]
 pub enum Kommando {
     OpprettSak(OpprettSak),
-    OpprettInngåendeJournalpost(OpprettInngåendeJurnalpost),
-    OpprettUtgåendeJournalpost(OpprettUgåendeJurnalpost),
-    OpprettInterntNotatJournalpost(OpprettInterntNotatJurnalpost),
+    OpprettInngåendeJournalpost(OpprettInngåendeJournalpost),
+    OpprettUtgåendeJournalpost(OpprettUgåendeJournalpost),
+    OpprettInterntNotatJournalpost(OpprettInterntNotatJournalpost),
+    AvsluttSak(SakKey),
 }

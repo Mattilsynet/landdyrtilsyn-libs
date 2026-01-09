@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::skuffen::journalpost::{JournalpostCommon, UtsendingMottaker};
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
-pub struct OpprettUgåendeJurnalpost {
+pub struct OpprettUgåendeJournalpost {
     #[serde(flatten)]
     pub felles: JournalpostCommon,
     avsender: Option<String>,
@@ -11,7 +11,7 @@ pub struct OpprettUgåendeJurnalpost {
 }
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
-pub struct OpprettUgåendeJurnalpostMedUtsending {
+pub struct OpprettUgåendeJournalpostMedUtsending {
     #[serde(flatten)]
     pub felles: JournalpostCommon,
     avsender: Option<String>,
@@ -19,7 +19,7 @@ pub struct OpprettUgåendeJurnalpostMedUtsending {
 }
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
-pub struct OpprettInngåendeJurnalpost {
+pub struct OpprettInngåendeJournalpost {
     #[serde(flatten)]
     pub felles: JournalpostCommon,
     avsender: String,
@@ -27,7 +27,7 @@ pub struct OpprettInngåendeJurnalpost {
 }
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
-pub struct OpprettInterntNotatJurnalpost {
+pub struct OpprettInterntNotatJournalpost {
     #[serde(flatten)]
     pub felles: JournalpostCommon,
 }
