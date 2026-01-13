@@ -1,14 +1,28 @@
-use crate::skuffen::command::{
-    journalpost::{
-        OpprettInngåendeJurnalpost, OpprettInterntNotatJurnalpost, OpprettUgåendeJurnalpost,
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+
+use crate::skuffen::{
+    command::{
+        journalpost::{
+            OpprettInngåendeJournalpost, OpprettInterntNotatJournalpost, OpprettUgåendeJournalpost,
+        },
+        sak::OpprettSak,
     },
-    sak::OpprettSak,
+    query::queries::SakKey,
 };
 
 #[derive(Debug)]
 pub enum Kommando {
     OpprettSak(OpprettSak),
-    OpprettInngåendeJournalpost(OpprettInngåendeJurnalpost),
-    OpprettUtgåendeJournalpost(OpprettUgåendeJurnalpost),
-    OpprettInterntNotatJournalpost(OpprettInterntNotatJurnalpost),
+    OpprettInngåendeJournalpost(OpprettInngåendeJournalpost),
+    OpprettUtgåendeJournalpost(OpprettUgåendeJournalpost),
+    OpprettInterntNotatJournalpost(OpprettInterntNotatJournalpost),
+    AvsluttSak(SakKey),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CommandEnvelope<T> {
+    pub command_id: Uuid,
+    pub correlation_id: Option<Uuid>,
+    pub payload: T,
 }
