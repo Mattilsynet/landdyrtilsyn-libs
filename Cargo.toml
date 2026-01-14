@@ -1,5 +1,6 @@
 [workspace]
 members = ["lib-keycloak-client", "lib-auth", "lib-google-cloud-storage", "lib-sql", "lib-nats", "lib-clients", "lib-schemas", "lib-slack-notifier", "lib-entra", "lib-email"]
+resolver = "3"
 
 [workspace.dependencies]
 serde = { version = "1.0.228", features = ["derive"] }

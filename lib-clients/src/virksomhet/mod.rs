@@ -1,2 +1,2 @@
-mod response;
-mod virksomhet_client;
+pub mod response;
+pub mod virksomhet_client;

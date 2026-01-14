@@ -38,7 +38,7 @@ pub use arkiv::{
 
 #[cfg(feature = "virksomhet")]
 pub use virksomhet::{
-    respone::Underenhet, response::Virksomhet, virksomhet_client::VirksomhetClient,
+    response::Underenhet, response::Virksomhet, virksomhet_client::VirksomhetClient,
 };
 
 #[cfg(feature = "tilsynskvittering")]
