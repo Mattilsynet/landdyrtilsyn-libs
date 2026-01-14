@@ -4,9 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-reqwest = { workspace = true, features = ["json", "rustls-tls"]}
+reqwest = { workspace = true, features = ["json","native-tls", "form"], default-features = false }
 reqwest-retry = { workspace = true }
-reqwest-middleware = { workspace = true, features = ["json", "rustls-tls"] }
+reqwest-middleware = { workspace = true, features = ["json", "form"] }
 serde = { workspace = true, features = ["derive"] }
 secrecy = { workspace = true }
 thiserror = { workspace = true }
