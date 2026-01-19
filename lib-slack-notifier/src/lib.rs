@@ -13,22 +13,21 @@
 //!
 //! ## Rask start
 //! ```rust,no_run
-//! use slack_error_notifier::{SlackNotifier, slack_error};
+//! use lib_slack_notifier::{slack_error, SlackNotifier};
 //! use std::env;
 //!
-//! #[tokio::main]
-//! async fn main() -> Result<(), reqwest::Error> {
-//!     // 1. Hent webhook‑URL fra en sikker kilde
-//!     let url = env::var("SLACK_WEBHOOK_URL")?;
-//!     let notifier = SlackNotifier::new(url);
+//! # async fn run() -> Result<(), Box<dyn std::error::Error>> {
+//! // 1. Hent webhook‑URL fra en sikker kilde
+//! let url = env::var("SLACK_WEBHOOK_URL")?;
+//! let notifier = SlackNotifier::new(url);
 //!
-//!     // 2. Gjør noe som kan feile …
-//!     if let Err(e) = do_work().await {
-//!         // 3. Post feilen til Slack. `slack_error!` samler fil + linje.
-//!         slack_error!(notifier, e)?;
-//!     }
-//!     Ok(())
+//! // 2. Gjør noe som kan feile …
+//! if let Err(e) = do_work().await {
+//!     // 3. Post feilen til Slack. `slack_error!` samler fil + linje.
+//!     slack_error!(notifier, e).await?;
 //! }
+//! # Ok(())
+//! # }
 //!
 //! async fn do_work() -> Result<(), anyhow::Error> {
 //!     Err(anyhow::anyhow!("Database connection failed"))
@@ -44,7 +43,6 @@
 //! };
 //! ```
 //!
-
 use reqwest::Client;
 use serde::Serialize;
 
@@ -127,20 +125,22 @@ impl SlackNotifier {
 /// [`SlackNotifier::send_error_with_attachment`]. Du velger dermed selv om du
 /// vil bruke `?`, `unwrap()`, logge feilen eller ignorere den:
 ///
-/// ```rust
-/// async fn demo() -> Result<(), reqwest::Error> {
-///     let notifier = slack_error_notifier::SlackNotifier::new("https://hooks…");
-///     use slack_error_notifier::slack_error;
-///     slack_error!(notifier, "Noe gikk galt").await?; // propagerer
-///     Ok(())
-/// }
+/// ```rust,no_run
+/// # async fn demo() -> Result<(), reqwest::Error> {
+/// use lib_slack_notifier::{slack_error, SlackNotifier};
+/// let notifier = SlackNotifier::new("https://hooks…");
+/// slack_error!(notifier, "Noe gikk galt").await?; // propagerer
+/// # Ok(())
+/// # }
 /// ```
 #[macro_export]
 macro_rules! slack_error {
-    ($notifier:expr, $err:expr) => {{
-        let location = format!("{}:{}", file!(), line!());
-        $notifier
-            .send_message_with_attachment(env!("CARGO_PKG_NAME"), &$err.to_string(), &location)
-            .await
-    }};
+    ($notifier:expr, $err:expr) => {
+        async {
+            let location = format!("{}:{}", file!(), line!());
+            $notifier
+                .send_message_with_attachment(env!("CARGO_PKG_NAME"), &$err.to_string(), &location)
+                .await
+        }
+    };
 }
