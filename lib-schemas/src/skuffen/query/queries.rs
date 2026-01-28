@@ -25,6 +25,6 @@ pub struct HentSakQuery {
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 #[serde(tag = "type", content = "value", rename_all = "camelCase")]
 pub enum SakKey {
-    SkuffenId(Uuid),
+    ClientReference(Uuid),
     ArkivId(crate::skuffen::sak::Saksnummer),
 }
