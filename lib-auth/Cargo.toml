@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 secrecy = { workspace = true}
-jsonwebtoken = { version = "9.3.1" }
+jsonwebtoken = { version = "10.3.0" }
 serde = {workspace = true}
 tracing = {workspace = true}
 reqwest = {workspace = true}
