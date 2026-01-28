@@ -11,7 +11,7 @@ use crate::skuffen::{
     query::queries::SakKey,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Kommando {
     OpprettSak(OpprettSak),
     OpprettInngåendeJournalpost(OpprettInngåendeJournalpost),
