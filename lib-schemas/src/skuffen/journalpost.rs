@@ -1,6 +1,6 @@
 use crate::{
     error::{Result, SchemasError},
-    skuffen::tilgang::Tilgang,
+    skuffen::{query::queries::SakKey, tilgang::Tilgang},
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -38,7 +38,7 @@ pub struct JournalpostCommon {
     pub tilgang: Option<Tilgang>,
     pub saksbehandler_enhet: String,
     pub dokumenter: Vec<Dokument>,
-    // pub journalpost_id: i32,
+    pub sak_key: SakKey,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub kildesystem: Option<String>,
 }
