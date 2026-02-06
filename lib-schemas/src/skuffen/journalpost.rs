@@ -16,6 +16,7 @@ pub struct JournalpostId(String);
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct JournalpostResponse {
+    pub client_reference: Uuid,
     pub tittel: String,
     pub dokument_dato: String, //TODO: Denne skal være datetime
     pub journalposttype: JournalpostType,
@@ -30,6 +31,7 @@ pub struct JournalpostResponse {
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct JournalpostCommon {
+    pub client_reference: Uuid,
     pub tittel: String,
     pub dokument_dato: String,
     pub journalposttype: JournalpostType,
@@ -46,8 +48,8 @@ pub struct JournalpostCommon {
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 #[serde(tag = "type", content = "value", rename_all = "camelCase")]
 pub enum JournalpostKey {
-    SkuffenId(Uuid),
-    ClientReference(JournalpostId),
+    ClientReference(Uuid),
+    JournalpostId(JournalpostId),
 }
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]

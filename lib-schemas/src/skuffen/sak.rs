@@ -10,6 +10,7 @@ use crate::skuffen::journalpost::JournalpostResponse;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SakResponse {
+    pub client_reference: Uuid,
     pub sakstittel: Sakstittel,
     pub saksbehandler: String,
     pub saksstatus: Saksstatus,
