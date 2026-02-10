@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::skuffen::{
     sak::{Ordningsverdi, Sakstittel},
@@ -7,6 +8,7 @@ use crate::skuffen::{
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct OpprettSak {
+    pub client_reference: Uuid,
     /// Sakstittel (required)
     /// Max length: 256, Min length: 1
     pub sakstittel: Sakstittel,

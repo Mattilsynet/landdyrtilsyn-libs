@@ -1,12 +1,12 @@
 use crate::{
     error::{Result, SchemasError},
-    skuffen::{query::queries::SakKey, tilgang::Tilgang},
+    skuffen::tilgang::Tilgang,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
-    skuffen::dokument::{Dokument, DokumentResponse},
+    skuffen::dokument::DokumentResponse,
     typer::{organisasjonsnummer::Organisasjonsnummer, personnummer::Personnummer},
 };
 
@@ -26,23 +26,6 @@ pub struct JournalpostResponse {
     pub dokumenter: Vec<DokumentResponse>,
     pub journalpost_id: i32,
     pub kildesystem: String,
-}
-
-#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
-#[serde(deny_unknown_fields)]
-pub struct JournalpostCommon {
-    pub client_reference: Uuid,
-    pub tittel: String,
-    pub dokument_dato: String,
-    pub saksbehandler: String,
-    pub saksbehandler_enhet: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub tilgang: Option<Tilgang>,
-    /// Første dokument i lista er hoveddokument
-    pub dokumenter: Vec<Dokument>,
-    pub sak_key: SakKey,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub kildesystem: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
