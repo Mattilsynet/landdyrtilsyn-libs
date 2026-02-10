@@ -34,11 +34,11 @@ pub struct JournalpostCommon {
     pub client_reference: Uuid,
     pub tittel: String,
     pub dokument_dato: String,
-    pub journalposttype: JournalpostType,
     pub saksbehandler: String,
+    pub saksbehandler_enhet: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tilgang: Option<Tilgang>,
-    pub saksbehandler_enhet: String,
+    /// Første dokument i lista er hoveddokument
     pub dokumenter: Vec<Dokument>,
     pub sak_key: SakKey,
     #[serde(skip_serializing_if = "Option::is_none")]
