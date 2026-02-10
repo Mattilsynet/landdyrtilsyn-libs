@@ -9,24 +9,24 @@ use crate::skuffen::{
 pub struct OpprettUgåendeJournalpost {
     #[serde(flatten)]
     pub felles: JournalpostCommon,
-    avsender: Option<String>,
-    mottaker: String,
+    pub avsender: Option<String>,
+    pub mottaker: String,
 }
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct OpprettUgåendeJournalpostMedUtsending {
     #[serde(flatten)]
     pub felles: JournalpostCommon,
-    avsender: Option<String>,
-    mottaker: Vec<UtsendingMottaker>,
+    pub avsender: Option<String>,
+    pub mottaker: Vec<UtsendingMottaker>,
 }
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct OpprettInngåendeJournalpost {
     #[serde(flatten)]
     pub felles: JournalpostCommon,
-    avsender: String,
-    mottaker: Option<String>,
+    pub avsender: String,
+    pub mottaker: Option<String>,
 }
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
