@@ -16,7 +16,7 @@ pub struct JournalpostId(String);
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct JournalpostResponse {
-    pub client_reference: Uuid,
+    pub client_reference: Option<Uuid>,
     pub tittel: String,
     pub dokument_dato: String, //TODO: Denne skal være datetime
     pub journalposttype: JournalpostType,

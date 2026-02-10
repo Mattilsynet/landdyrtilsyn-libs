@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct DokumentResponse {
-    pub client_reference: Uuid,
+    pub client_reference: Option<Uuid>,
     pub tittel: String,
     pub filtype: String,
     pub dokument_referanse: Option<Uuid>,
