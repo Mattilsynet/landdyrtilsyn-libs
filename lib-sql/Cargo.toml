@@ -7,13 +7,14 @@ edition = "2024"
 
 [dependencies]
 secrecy = { workspace = true }
-sqlx = { version = "0.8.6", default-features = false, features = [
+sqlx = { version = "0.8.6",  default-features = false, features = [
+    "runtime-tokio",
+    "runtime-tokio-rustls",
     "postgres",
-    "runtime-tokio-native-tls",
+    "migrate",
     "uuid",
     "chrono",
     "macros",
-    "migrate",
 ] }
 
 
