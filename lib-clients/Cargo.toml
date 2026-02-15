@@ -17,7 +17,7 @@ tokio = { workspace = true, features = ["sync"] }
 chrono = { workspace = true, features = ["serde"] }
 uuid = { workspace = true, features = ["v4"] }
 
-bon = {version = "3.8.2",optional = true}
+bon = {version = "3.9.0",optional = true}
 serde_path_to_error = "0.1.20"
 urlencoding = "2.1.3"
 

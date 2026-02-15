@@ -9,7 +9,7 @@ delegated_permissions = []
 application_permissions = []
 
 [dependencies]
-reqwest = { workspace = true, features = ["json","native-tls", "form", "http2"], default-features = false }
+reqwest = { workspace = true, features = ["json","rustls", "form", "http2"], default-features = false }
 serde = { workspace = true, features = ["derive"] }
 thiserror = { workspace = true }
 serde_json = { workspace = true }
