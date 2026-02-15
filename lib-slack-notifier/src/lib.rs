@@ -24,7 +24,7 @@
 //! // 2. Gjør noe som kan feile …
 //! if let Err(e) = do_work().await {
 //!     // 3. Post feilen til Slack. `slack_error!` samler fil + linje.
-//!     slack_error!(notifier, e).await?;
+//!     slack_error!(notifier, e);
 //! }
 //! # Ok(())
 //! # }
@@ -129,18 +129,16 @@ impl SlackNotifier {
 /// # async fn demo() -> Result<(), reqwest::Error> {
 /// use lib_slack_notifier::{slack_error, SlackNotifier};
 /// let notifier = SlackNotifier::new("https://hooks…");
-/// slack_error!(notifier, "Noe gikk galt").await?; // propagerer
+/// slack_error!(notifier, "Noe gikk galt"); // propagerer
 /// # Ok(())
 /// # }
 /// ```
 #[macro_export]
 macro_rules! slack_error {
-    ($notifier:expr, $err:expr) => {
-        async {
-            let location = format!("{}:{}", file!(), line!());
-            $notifier
-                .send_message_with_attachment(env!("CARGO_PKG_NAME"), &$err.to_string(), &location)
-                .await
-        }
-    };
+    ($notifier:expr, $err:expr) => {{
+        let location = format!("{}:{}", file!(), line!());
+        $notifier
+            .send_message_with_attachment(env!("CARGO_PKG_NAME"), &$err.to_string(), &location)
+            .await
+    }};
 }
