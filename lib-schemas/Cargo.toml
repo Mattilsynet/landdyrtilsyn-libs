@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 serde = { workspace = true }
 thiserror = { workspace = true}
-chrono = { version = "0.4.42", features = ["serde"] }
+chrono = { version = "0.4.43", features = ["serde"] }
 uuid = { version = "1.21.0", features = ["serde", "v7", "v4"] }
 
 [features]
