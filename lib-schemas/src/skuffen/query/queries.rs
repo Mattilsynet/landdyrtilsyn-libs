@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::skuffen::journalpost::JournalpostKey;
+use crate::skuffen::sak::Saksnummer;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Query {
@@ -19,12 +20,11 @@ pub struct HentJournalpostQuery {
 #[serde(rename_all = "camelCase")]
 pub struct HentSakQuery {
     pub key: SakKey,
-    pub inkluder_journalposter: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 #[serde(tag = "type", content = "value", rename_all = "camelCase")]
 pub enum SakKey {
     ClientReference(Uuid),
-    ArkivId(crate::skuffen::sak::Saksnummer),
+    ArkivId(Saksnummer),
 }

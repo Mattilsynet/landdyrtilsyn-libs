@@ -43,6 +43,11 @@ pub struct OpprettSak {
 }
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
+pub struct AvsluttSak {
+    pub sak_key: crate::skuffen::query::queries::SakKey,
+}
+
+#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub enum Arkivdel {
     Tilsynsdivisjonene, //Mappes til "SAK"
     Hovedkontoret,      //Mappes til "SAKHK"

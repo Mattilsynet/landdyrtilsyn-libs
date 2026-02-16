@@ -1,27 +1,7 @@
-use crate::{
-    error::{Result, SchemasError},
-    skuffen::tilgang::Tilgang,
-};
+use crate::error::{Result, SchemasError};
 use serde::{Deserialize, Serialize};
 use std::{fmt, str::FromStr};
 use uuid::Uuid;
-
-use crate::skuffen::journalpost::JournalpostResponse;
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct SakResponse {
-    pub client_reference: Option<Uuid>,
-    pub sakstittel: Sakstittel,
-    pub saksbehandler: String,
-    pub saksstatus: Saksstatus,
-    pub tilgang: Option<Tilgang>,
-    pub ordningsverdi: Ordningsverdi,
-    pub sak_key: SakKeyResponse,
-    pub kildesystem: String,
-    pub lukket: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub journalposter: Option<Vec<JournalpostResponse>>,
-}
 
 /**
 * SaksTittel benyttes på opprettelse av sak i arkiv
@@ -104,13 +84,6 @@ impl Ordningsverdi {
 
         Ok(Ordningsverdi(s))
     }
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct SakKeyResponse {
-    pub skuffen_id: Uuid,
-    pub arkiv_id: Option<Saksnummer>,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]

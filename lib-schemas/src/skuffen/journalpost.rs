@@ -1,32 +1,11 @@
-use crate::{
-    error::{Result, SchemasError},
-    skuffen::tilgang::Tilgang,
-};
+use crate::error::{Result, SchemasError};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::{
-    skuffen::dokument::DokumentResponse,
-    typer::{organisasjonsnummer::Organisasjonsnummer, personnummer::Personnummer},
-};
+use crate::typer::{organisasjonsnummer::Organisasjonsnummer, personnummer::Personnummer};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
-pub struct JournalpostId(String);
-
-#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
-#[serde(deny_unknown_fields)]
-pub struct JournalpostResponse {
-    pub client_reference: Option<Uuid>,
-    pub tittel: String,
-    pub dokument_dato: String, //TODO: Denne skal være datetime
-    pub journalposttype: JournalpostType,
-    pub journalstatus: Journalpoststatus,
-    pub tilgang: Option<Tilgang>,
-    pub saksbehandler: String,
-    pub dokumenter: Vec<DokumentResponse>,
-    pub journalpost_id: i32,
-    pub kildesystem: String,
-}
+pub struct JournalpostId(pub String);
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 #[serde(tag = "type", content = "value", rename_all = "camelCase")]
