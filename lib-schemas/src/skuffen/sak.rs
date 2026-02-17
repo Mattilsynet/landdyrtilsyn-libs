@@ -1,7 +1,6 @@
 use crate::error::{Result, SchemasError};
 use serde::{Deserialize, Serialize};
 use std::{fmt, str::FromStr};
-use uuid::Uuid;
 
 /**
 * SaksTittel benyttes på opprettelse av sak i arkiv

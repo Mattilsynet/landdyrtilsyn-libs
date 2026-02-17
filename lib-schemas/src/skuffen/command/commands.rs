@@ -2,15 +2,11 @@ use crate::error::{Result, SchemasError};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::skuffen::{
-    command::{
-        journalpost::{
-            OpprettInngåendeJournalpost, OpprettInterntNotatJournalpost, OpprettUgåendeJournalpost,
-        },
-        sak::{AvsluttSak, OpprettSak},
+use crate::skuffen::command::{
+    journalpost::{
+        OpprettInngåendeJournalpost, OpprettInterntNotatJournalpost, OpprettUgåendeJournalpost,
     },
-    journalpost::JournalpostId,
-    sak::Saksnummer,
+    sak::{AvsluttSak, OpprettSak},
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
