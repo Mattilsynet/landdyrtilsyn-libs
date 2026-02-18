@@ -1,5 +1,5 @@
-use async_nats::header::HeaderValue;
 use async_nats::HeaderMap;
+use async_nats::header::HeaderValue;
 use uuid::Uuid;
 
 use crate::error::{Error, Result};

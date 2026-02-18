@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use async_nats::Message;
 
 use crate::chunked_upload::protocol::{
-    assemble_chunks, parse_chunk_info, ChunkInfo, ChunkedPayload,
+    ChunkInfo, ChunkedPayload, assemble_chunks, parse_chunk_info,
 };
 use crate::error::{Error, Result};
 
