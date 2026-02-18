@@ -26,23 +26,21 @@ pub async fn publish_chunked_bytes(
         return Err(Error::PublishError("Payload must not be empty".to_string()));
     }
 
-    let subject = subject;
     let upload_id = Uuid::new_v4().to_string();
     let total_size = payload.len();
-    let chunk_count = ((total_size + chunk_size - 1) / chunk_size) as u32;
+    let chunk_count = total_size.div_ceil(chunk_size) as u32;
 
     for (index, chunk) in payload.chunks(chunk_size).enumerate() {
-        publish_chunk(
-            context,
-            subject.clone(),
-            chunk,
-            &upload_id,
-            index as u32,
+        let request = ChunkPublishRequest {
+            subject: subject.clone(),
+            payload: chunk,
+            upload_id: &upload_id,
+            chunk_index: index as u32,
             chunk_count,
             total_size,
-            &metadata,
-        )
-        .await?;
+            metadata: &metadata,
+        };
+        publish_chunk(context, request).await?;
     }
 
     Ok(UploadResult {
@@ -52,23 +50,30 @@ pub async fn publish_chunked_bytes(
     })
 }
 
-async fn publish_chunk(
-    context: &Context,
+struct ChunkPublishRequest<'a> {
     subject: String,
-    payload: &[u8],
-    upload_id: &str,
+    payload: &'a [u8],
+    upload_id: &'a str,
     chunk_index: u32,
     chunk_count: u32,
     total_size: usize,
-    metadata: &UploadMetadata,
-) -> Result<()> {
-    let headers = build_chunk_headers(upload_id, chunk_index, chunk_count, total_size, metadata);
-    let payload_bytes = Bytes::from(payload.to_vec());
+    metadata: &'a UploadMetadata,
+}
+
+async fn publish_chunk(context: &Context, request: ChunkPublishRequest<'_>) -> Result<()> {
+    let headers = build_chunk_headers(
+        request.upload_id,
+        request.chunk_index,
+        request.chunk_count,
+        request.total_size,
+        request.metadata,
+    );
+    let payload_bytes = Bytes::from(request.payload.to_vec());
     let publish = PublishMessage::build()
         .headers(headers)
         .payload(payload_bytes);
     context
-        .send_publish(subject, publish)
+        .send_publish(request.subject, publish)
         .await
         .map_err(|err| match err.kind() {
             PublishErrorKind::TimedOut => {
