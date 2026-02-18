@@ -85,6 +85,17 @@ impl Ordningsverdi {
 
         Ok(Ordningsverdi(s))
     }
+
+    /// Returner raw ordningsverdi string.
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl fmt::Display for Ordningsverdi {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.0)
+    }
 }
 
 /// Saksstatus codes mappet til Skuffen conventions.
@@ -191,6 +202,20 @@ impl fmt::Display for Saksnummer {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn ordningsverdi_string_conversion() {
+        let ordningsverdi = Ordningsverdi::new("123-45".to_string()).unwrap();
+        assert_eq!(ordningsverdi.as_str(), "123-45");
+        assert_eq!(ordningsverdi.to_string(), "123-45");
+    }
+
+    #[test]
+    fn ordningsverdi_rejects_invalid_values() {
+        assert!(Ordningsverdi::new("".to_string()).is_err());
+        assert!(Ordningsverdi::new("12A".to_string()).is_err());
+        assert!(Ordningsverdi::new("12-3-4".to_string()).is_err());
+    }
 
     #[test]
     fn from_parts_valid() {
