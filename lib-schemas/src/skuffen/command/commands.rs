@@ -9,6 +9,7 @@ use crate::skuffen::command::{
     sak::{AvsluttSak, OpprettSak},
 };
 
+/// Commands støttet av Skuffen command API.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Command {
     OpprettSak(OpprettSak),
@@ -18,6 +19,7 @@ pub enum Command {
     AvsluttSak(AvsluttSak),
 }
 
+/// Envelope for commands inkl. ids brukt for idempotency og tracing.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CommandEnvelope<T> {
     pub command_id: Uuid,
@@ -25,9 +27,11 @@ pub struct CommandEnvelope<T> {
     pub payload: T,
 }
 
+/// Non-empty liste med commands som kjøres som en sequence.
 pub struct CommandSequence(Vec<CommandEnvelope<Command>>);
 
 impl CommandSequence {
+    /// Lag en sequence, reject empty lists.
     pub fn new(commands: Vec<CommandEnvelope<Command>>) -> Result<Self> {
         if commands.is_empty() {
             return Err(SchemasError::ValidationError(
@@ -37,6 +41,7 @@ impl CommandSequence {
         Ok(Self(commands))
     }
 
+    /// Returner underlying vector av command envelopes.
     pub fn into_inner(self) -> Vec<CommandEnvelope<Command>> {
         self.0
     }
@@ -59,6 +64,7 @@ impl IntoIterator for CommandSequence {
     }
 }
 
+/// Command execution status values.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub enum CommandStatus {
@@ -69,18 +75,18 @@ pub enum CommandStatus {
     Error,
 }
 
+/// Receipt fra request-reply: validation/idempotency sjekket og command er
+/// accepted (Ok) eller rejected (Error). Dette er ikke execution result.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "type", rename_all = "camelCase")]
-/// Kvittering fra request-reply: validering/idempotens sjekket og kommandoen er
-/// enten akseptert (Ok) eller avvist (Error). Dette er ikke utførelsesresultat.
 pub enum CommandReceipt {
     Ok { command_id: Uuid },
     Error { message: String, command_id: Uuid },
 }
 
+/// Asynkrone command status updates publisert på JetStream.
+/// Brukes for å følge lifecycle events (validation, execution, retry, blocked, etc.).
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-/// Asynkrone statusoppdateringer for en kommando som sendes på JetStream.
-/// Brukes for å følge livssyklusen (validering, kjøring, retry, blokkert, osv.).
 pub struct CommandStatusEvent {
     pub command_id: Uuid,
     pub status: CommandStatus,

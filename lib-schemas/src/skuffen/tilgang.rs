@@ -1,10 +1,11 @@
 use serde::{Deserialize, Serialize};
 
+/// Access restriction metadata for saker og journalposter.
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct Tilgang {
-    /// Tilgangskode fra kodeverk TILGANGSKODE
+    /// Access code fra TILGANGSKODE code set.
     pub tilgangskode: String,
-    /// Hjemmel for at saken skal være unntatt fra offentligheten.
-    /// Kode fra kodeverk TILGANGSHJEMMEL
+    /// Legal basis for exemption fra public access.
+    /// Code fra TILGANGSHJEMMEL code set.
     pub tilgangshjemmel: String,
 }

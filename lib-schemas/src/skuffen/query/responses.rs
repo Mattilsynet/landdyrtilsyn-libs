@@ -5,6 +5,7 @@ use crate::skuffen::journalpost::{JournalpostId, JournalpostType, Journalpoststa
 use crate::skuffen::sak::{Ordningsverdi, Saksnummer, Saksstatus, Sakstittel};
 use crate::skuffen::tilgang::Tilgang;
 
+/// Response payload for en sak.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SakResponse {
     pub sakstittel: Sakstittel,
@@ -20,6 +21,7 @@ pub struct SakResponse {
     pub journalposter: Option<Vec<JournalpostResponse>>,
 }
 
+/// Response metadata for dokument.
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct DokumentResponse {
     pub tittel: String,
@@ -27,11 +29,12 @@ pub struct DokumentResponse {
     pub dokument_referanse: Option<Uuid>,
 }
 
+/// Response payload for en journalpost.
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct JournalpostResponse {
     pub tittel: String,
-    pub dokument_dato: String, //TODO: Denne skal være datetime
+    pub dokument_dato: String, // TODO: Denne skal være datetime
     pub journalposttype: JournalpostType,
     pub journalstatus: Journalpoststatus,
     pub tilgang: Option<Tilgang>,

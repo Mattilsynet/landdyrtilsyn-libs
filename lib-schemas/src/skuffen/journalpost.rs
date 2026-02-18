@@ -4,9 +4,11 @@ use uuid::Uuid;
 
 use crate::typer::{organisasjonsnummer::Organisasjonsnummer, personnummer::Personnummer};
 
+/// Identifier for journalposter lagret i arkivet.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct JournalpostId(pub String);
 
+/// Keys for å hente journalposter.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 #[serde(tag = "type", content = "value", rename_all = "camelCase")]
 pub enum JournalpostKey {
@@ -14,6 +16,7 @@ pub enum JournalpostKey {
     JournalpostId(JournalpostId),
 }
 
+/// Recipient definition brukt ved utsending.
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct UtsendingMottaker {
     pub navn: String,
@@ -23,6 +26,7 @@ pub struct UtsendingMottaker {
     pub id: MottakerId,
 }
 
+/// Recipient identifier (person eller organization).
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub enum MottakerId {
     Person {
@@ -33,12 +37,14 @@ pub enum MottakerId {
     },
 }
 
+/// Sender wrapper med flattened fields.
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct Avsender {
     #[serde(flatten)]
     avsender_mottaker: AvsenderMottaker,
 }
 
+/// Recipient wrapper med flattened fields.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Mottaker {
     #[serde(flatten)]
@@ -47,6 +53,7 @@ pub struct Mottaker {
 
 //TODO: Håndtere kopi
 
+/// Common sender/recipient fields for journalposter.
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct AvsenderMottaker {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -65,6 +72,7 @@ pub struct AvsenderMottaker {
     pub id_type: Option<String>,
 }
 
+/// Journalpost types mappet til archive codes.
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub enum JournalpostType {
     Inngående,
@@ -72,6 +80,7 @@ pub enum JournalpostType {
     InterntNotat,
 }
 
+/// Journalpost status values mappet til archive codes.
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub enum Journalpoststatus {
     Registrert,
@@ -83,12 +92,14 @@ pub enum Journalpoststatus {
 }
 
 impl JournalpostId {
+    /// Returner raw journalpost id string.
     pub fn as_str(&self) -> &str {
         &self.0
     }
 }
 
 impl JournalpostType {
+    /// Returner external code representation.
     pub fn code(self) -> char {
         match self {
             JournalpostType::Inngående => 'I',
@@ -97,6 +108,7 @@ impl JournalpostType {
         }
     }
 
+    /// Parse fra external code representation.
     pub fn from_char(c: char) -> Result<Self> {
         let journalpost_type = match c {
             'I' => Self::Inngående,
@@ -113,6 +125,7 @@ impl JournalpostType {
 }
 
 impl Journalpoststatus {
+    /// Returner external code representation.
     pub fn code(self) -> char {
         match self {
             Journalpoststatus::Registrert => 'S',
@@ -124,6 +137,7 @@ impl Journalpoststatus {
         }
     }
 
+    /// Parse fra external code representation.
     pub fn from_char(c: char) -> Result<Self> {
         let journalpoststatus = match c {
             'S' => Self::Registrert,

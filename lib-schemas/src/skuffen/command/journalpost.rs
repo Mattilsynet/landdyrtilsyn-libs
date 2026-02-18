@@ -5,6 +5,7 @@ use crate::skuffen::{
     dokument::Dokument, journalpost::UtsendingMottaker, query::queries::SakKey, tilgang::Tilgang,
 };
 
+/// Lag en outgoing journalpost.
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct OpprettUgåendeJournalpost {
     #[serde(flatten)]
@@ -13,6 +14,7 @@ pub struct OpprettUgåendeJournalpost {
     pub mottaker: String,
 }
 
+/// Lag en outgoing journalpost med multiple recipients.
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct OpprettUgåendeJournalpostMedUtsending {
     #[serde(flatten)]
@@ -21,6 +23,7 @@ pub struct OpprettUgåendeJournalpostMedUtsending {
     pub mottaker: Vec<UtsendingMottaker>,
 }
 
+/// Lag en incoming journalpost.
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct OpprettInngåendeJournalpost {
     #[serde(flatten)]
@@ -29,12 +32,14 @@ pub struct OpprettInngåendeJournalpost {
     pub mottaker: Option<String>,
 }
 
+/// Lag en internal note journalpost.
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct OpprettInterntNotatJournalpost {
     #[serde(flatten)]
     pub felles: JournalpostCommon,
 }
 
+/// Fields shared av alle journalpost creation commands.
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct JournalpostCommon {
@@ -45,7 +50,7 @@ pub struct JournalpostCommon {
     pub saksbehandler_enhet: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tilgang: Option<Tilgang>,
-    /// Første dokument i lista er hoveddokument
+    /// Første dokument i lista er hoveddokument.
     pub dokumenter: Vec<Dokument>,
     pub sak_key: SakKey,
     #[serde(skip_serializing_if = "Option::is_none")]

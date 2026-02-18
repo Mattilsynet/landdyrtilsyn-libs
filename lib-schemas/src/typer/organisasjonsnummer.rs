@@ -1,9 +1,11 @@
 use serde::{Deserialize, Serialize};
 
+/// Norsk organization number (9 digits).
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Organisasjonsnummer(String);
 
 impl Organisasjonsnummer {
+    /// Lag et validert organisasjonsnummer.
     pub fn new(orgnr: impl Into<String>) -> Result<Self, &'static str> {
         let orgnr = orgnr.into();
         if !Self::valider(&orgnr) {
@@ -12,10 +14,12 @@ impl Organisasjonsnummer {
         Ok(Self(orgnr))
     }
 
+    /// Returner raw number string.
     pub fn as_str(&self) -> &str {
         &self.0
     }
 
+    /// Valider control digit med modulus 11.
     fn valider(orgnr: &str) -> bool {
         if orgnr.len() != 9 || !orgnr.chars().all(|c| c.is_ascii_digit()) {
             return false;

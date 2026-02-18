@@ -1,3 +1,10 @@
+/// Macro for a definere newtype UUID identifiers.
+///
+/// Lager en `struct` som wrapper `Uuid` og gir:
+/// - `ny()` constructor for random UUID
+/// - `From<Uuid>` conversion
+/// - `AsRef<Uuid>` accessor
+/// - `Display` og `FromStr` implementations
 #[allow(unused_macros)]
 macro_rules! uuid_id {
     ($name:ident, $doc:expr) => {

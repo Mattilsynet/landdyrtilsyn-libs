@@ -6,6 +6,7 @@ use crate::skuffen::{
     tilgang::Tilgang,
 };
 
+/// Command for oppretting av sak i arkivet.
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct OpprettSak {
     pub client_reference: Uuid,
@@ -21,7 +22,7 @@ pub struct OpprettSak {
     // pub journalenhet: Option<String>,
 
     /// Arkivet støtter å opprette en sak med bare enhet, eller uten enhet og uten saksbehandler.
-    /// Men dette fører noen ganger til feil. Skuffen støtter ikke dette intil videre for å
+    /// Men dette fører noen ganger til feil. Skuffen støtter ikke dette inntil videre for å
     /// opprettholde kontroll over flyten med journalføring av avskriving.
     pub saksbehandler_id: String,
     pub saksbehandler_enhet: String,
@@ -42,13 +43,15 @@ pub struct OpprettSak {
     // pub virksomhetsmappe_id: Option<String>,
 }
 
+/// Command for å avslutte en sak.
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct AvsluttSak {
     pub sak_key: crate::skuffen::query::queries::SakKey,
 }
 
+/// Arkivdel for saken som skal opprettes.
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub enum Arkivdel {
-    Tilsynsdivisjonene, //Mappes til "SAK"
-    Hovedkontoret,      //Mappes til "SAKHK"
+    Tilsynsdivisjonene, // Mappes til "SAK"
+    Hovedkontoret,      // Mappes til "SAKHK"
 }

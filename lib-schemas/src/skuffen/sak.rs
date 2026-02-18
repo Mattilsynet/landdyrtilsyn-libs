@@ -2,15 +2,15 @@ use crate::error::{Result, SchemasError};
 use serde::{Deserialize, Serialize};
 use std::{fmt, str::FromStr};
 
-/**
-* SaksTittel benyttes på opprettelse av sak i arkiv
-*/
+/// Sakstittel brukt ved opprettelse av saker i arkivet.
 const SAKSTITTEL_MAX_LENGTH: usize = 256;
 
+/// Tittel for en sak, validert for non-empty og max length.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct Sakstittel(pub String);
 
 impl Sakstittel {
+    /// Returner en redacted tittel for UO-handling.
     pub fn uo_tittel(&self) -> Sakstittel {
         Sakstittel("*****".to_string())
     }
@@ -54,10 +54,12 @@ impl fmt::Display for Sakstittel {
     }
 }
 
+/// Ordningsverdi i arkivnøkkel (Mattilsynet).
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct Ordningsverdi(String);
 
 impl Ordningsverdi {
+    /// Lag en ordningsverdi og sjekk non-empty og tillatte characters.
     pub fn new(s: String) -> Result<Self> {
         // non-empty
         if s.is_empty() {
@@ -85,6 +87,7 @@ impl Ordningsverdi {
     }
 }
 
+/// Saksstatus codes mappet til Skuffen conventions.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub enum Saksstatus {
     UnderBehandling,
@@ -93,6 +96,7 @@ pub enum Saksstatus {
 }
 
 impl Saksstatus {
+    /// Returner external code representation.
     pub fn code(self) -> char {
         match self {
             Saksstatus::UnderBehandling => 'B',
@@ -101,6 +105,7 @@ impl Saksstatus {
         }
     }
 
+    /// Parse fra external code representation.
     pub fn from_char(c: char) -> Result<Self> {
         let saksstatus = match c {
             'B' => Self::UnderBehandling,
@@ -116,12 +121,13 @@ impl Saksstatus {
     }
 }
 
+/// Saksnummer formatert som `YYYY/<sequence>`.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct Saksnummer(String);
 
 impl Saksnummer {
-    /// Construct from separate year and sequence parts.
-    /// The result will be formatted as "YYYY/<seq>"
+    /// Construct fra separate year og sequence parts.
+    /// Resultatet formateres som `YYYY/<seq>`.
     pub fn new_from_parts(year: u16, sequence: impl AsRef<str>) -> Result<Self> {
         if !(1000..=9999).contains(&year) {
             return Err(SaksnummerError::UgyldigÅr(year).into());
@@ -133,9 +139,9 @@ impl Saksnummer {
         Ok(Self(format!("{year}/{seq}")))
     }
 
-    /// Construct from a string of the form "YYYY/<seq>".
-    /// - Year must be 4 digits and valid.
-    /// - Sequence can be any non-empty string.
+    /// Construct fra en string med format `YYYY/<seq>`.
+    /// - Year må være 4 digits og valid.
+    /// - Sequence kan være en hvilken som helst non-empty string.
     pub fn new(s: impl Into<String>) -> Result<Self> {
         let s = s.into();
         let parts: Vec<&str> = s.splitn(2, '/').collect();
@@ -160,14 +166,17 @@ impl Saksnummer {
         Ok(Self(s))
     }
 
+    /// Returner raw saksnummer string.
     pub fn as_str(&self) -> &str {
         &self.0
     }
 
+    /// Returner parsed year part.
     pub fn year(&self) -> u16 {
         self.0[0..4].parse().expect("validated year")
     }
 
+    /// Returner sequence part etter slash.
     pub fn sequence(&self) -> &str {
         &self.0[5..]
     }
@@ -243,6 +252,7 @@ mod tests {
     }
 }
 
+/// Errors relatert til sakstittel validation.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub enum SakstittelError {
     Empty,
@@ -263,6 +273,7 @@ impl fmt::Display for SakstittelError {
 
 impl std::error::Error for SakstittelError {}
 
+/// Errors relatert til saksnummer parsing.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub enum SaksnummerError {
     UgyldigFormat,

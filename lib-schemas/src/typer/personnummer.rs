@@ -1,9 +1,11 @@
 use serde::{Deserialize, Serialize};
 
+/// Norsk national identification number (11 digits).
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Personnummer(String);
 
 impl Personnummer {
+    /// Lag et validert personnummer.
     pub fn new(pnr: impl Into<String>) -> Result<Self, &'static str> {
         let pnr = pnr.into();
         if !Self::valider(&pnr) {
@@ -12,10 +14,14 @@ impl Personnummer {
         Ok(Self(pnr))
     }
 
+    /// Returner raw number string.
     pub fn as_str(&self) -> &str {
         &self.0
     }
-    //Doc: http://www.fnrinfo.no/Teknisk/KontrollsifferSjekk.aspx
+
+    /// Valider control digits (K1/K2) for et fødselsnummer.
+    ///
+    /// Ref: http://www.fnrinfo.no/Teknisk/KontrollsifferSjekk.aspx
     pub fn valider(fnr: &str) -> bool {
         if fnr.len() != 11 || !fnr.chars().all(|c| c.is_ascii_digit()) {
             return false;
