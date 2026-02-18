@@ -15,6 +15,20 @@ I tillegg må du legge til følgende linje i .zshrc filen din:
 export CARGO_NET_GIT_FETCH_WITH_CLI=true
 ```
 
+## Lokal sjekk av hele repoet
+
+For å sjekke alle crates lokalt, kjør denne kommandoen fra repo-roten:
+
+```bash
+cargo check-all
+```
+
+Dette er en alias til:
+
+```bash
+cargo check --workspace --all-targets --all-features
+```
+
 ## Hendvendelser
 
 Spørsmål knyttet til koden eller prosjektet kan stilles som issues her på GitHub
