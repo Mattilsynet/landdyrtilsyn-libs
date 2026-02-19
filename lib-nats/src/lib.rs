@@ -2,6 +2,7 @@ pub mod chunked_upload;
 pub mod config;
 pub mod consumer;
 pub mod error;
+pub mod object_store;
 
 pub use async_nats::Client;
 pub use async_nats::HeaderMap;

@@ -37,3 +37,30 @@ Payload bytes er selve chunk-bytene.
 - Hver chunk har protocol headers som beskriver upload id, indeks og total størrelse.
 - Mottaker samler chunks per `X-Chunked-Upload-Id` og setter sammen når alle er mottatt.
 - Ferdig payload returneres som `ChunkedPayload` med valgfri filename/content-type metadata.
+
+## Object Store
+
+Wrapper for NATS JetStream Object Store, med enkle funksjoner for opplasting og nedlasting.
+
+### Rust inngangspunkt
+
+- `lib-nats/src/object_store.rs`
+
+### Eksempler
+
+```rust
+use lib_nats::object_store;
+
+let jetstream = lib_nats::create_jetstream_instance(client).await;
+let store = object_store::get_or_create_object_store(
+    &jetstream,
+    async_nats::jetstream::object_store::Config {
+        bucket: "saker".to_string(),
+        ..Default::default()
+    },
+)
+.await?;
+
+object_store::store_bytes(&store, "fil.txt", b"data").await?;
+let bytes = object_store::fetch_bytes(&store, "fil.txt").await?;
+```
