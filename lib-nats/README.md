@@ -28,7 +28,7 @@ Payload bytes er selve chunk-bytene.
 ### Rust inngangspunkt
 
 - Sender: `lib-nats/src/chunked_upload/sender.rs` (`publish_chunked_bytes`)
-- Mottaker: `lib-nats/src/chunked_upload/receiver.rs` (`ChunkedUploadAssembler`)
+- Mottaker: `lib-nats/src/chunked_upload/receiver.rs` (`ChunkedUploadAssembler`, `UploadLimits`)
 - Felles protocol: `lib-nats/src/chunked_upload/protocol.rs`
 
 ### Hvordan det fungerer
@@ -37,6 +37,37 @@ Payload bytes er selve chunk-bytene.
 - Hver chunk har protocol headers som beskriver upload id, indeks og total størrelse.
 - Mottaker samler chunks per `X-Chunked-Upload-Id` og setter sammen når alle er mottatt.
 - Ferdig payload returneres som `ChunkedPayload` med valgfri filename/content-type metadata.
+
+### Limits og TTL
+
+`ChunkedUploadAssembler` validerer payload og beskytter mot ubegrenset minnebruk. Ved feil slettes state for upload-id, og `push` returnerer `Error::FetchError`.
+
+Standardgrenser:
+
+- max upload size: 100 MB
+- max chunk count: 2000
+- max inflight uploads: 100
+- max inflight bytes: 500 MB
+- max chunk size: 8 MB (matcher `MAX_CHUNK_SIZE`)
+- TTL for incomplete uploads: 10 minutter
+
+Egendefinerte grenser:
+
+```rust
+use lib_nats::chunked_upload::receiver::ChunkedUploadAssembler;
+use lib_nats::chunked_upload::UploadLimits;
+
+let limits = UploadLimits {
+    max_upload_size: 100 * 1024 * 1024,
+    max_chunk_count: 2_000,
+    max_inflight_uploads: 100,
+    max_inflight_bytes: 500 * 1024 * 1024,
+    max_chunk_size: 8 * 1024 * 1024,
+    ttl: std::time::Duration::from_secs(10 * 60),
+};
+
+let mut assembler = ChunkedUploadAssembler::with_limits(limits);
+```
 
 ## Object Store
 
