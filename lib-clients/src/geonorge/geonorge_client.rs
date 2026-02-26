@@ -190,7 +190,7 @@ impl GeoNorgeClient {
             .get(&url)
             .query(&[
                 ("lat", koordinater.latitude.to_string()),
-                ("long", koordinater.longitude.to_string()),
+                ("lon", koordinater.longitude.to_string()),
                 ("radius", "100".to_string()), // meter
                 ("treffPerSide", "1".to_string()),
             ])
