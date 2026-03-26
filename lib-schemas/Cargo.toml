@@ -9,7 +9,9 @@ thiserror = { workspace = true}
 chrono = { version = "0.4.43", features = ["serde"] }
 uuid = { version = "1.21.0", features = ["serde", "v7", "v4"] }
 
+[dev-dependencies]
+serde_json = { workspace = true }
+
 [features]
 skuffen = []
 default = []
-
