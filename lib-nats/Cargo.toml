@@ -7,7 +7,7 @@ edition = "2024"
 
 [dependencies]
 secrecy = { workspace = true }
-async-nats = { version = "0.46.0" }
+async-nats = { version = "0.47.0" }
 futures = { version = "0.3.32", default-features = false }
 bytes = { workspace = true }
 uuid = { workspace = true }
