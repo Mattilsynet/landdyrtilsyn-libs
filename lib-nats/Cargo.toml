@@ -5,12 +5,12 @@ edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[patch.crates-io]
+
 [dependencies]
 secrecy = { workspace = true }
-async-nats = { version = "0.46.0" }
+async-nats = { version = "0.47.0" }
 futures = { version = "0.3.32", default-features = false }
 bytes = { workspace = true }
 uuid = { workspace = true }
 tokio = { workspace = true, features = ["fs", "io-util"] }
-#RUSTSEC
-rustls-webpki = "0.103.10"

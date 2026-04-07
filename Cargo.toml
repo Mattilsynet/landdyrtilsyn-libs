@@ -16,9 +16,6 @@ chrono = { version = "0.4.44", features = ["serde"] }
 uuid = { version = "1.23.0", features = ["v4"] }
 bytes = "1.11.1"
 
-tokio = { version = "1.50.0", features = ["rt-multi-thread", "macros"] }
+tokio = { version = "1.51.0", features = ["rt-multi-thread", "macros"] }
 
 base64 = "0.22.1"
-
-# RUSTSEC
-rustls-webpki = "0.103.10"

@@ -6,8 +6,8 @@ edition = "2024"
 [dependencies]
 serde = { workspace = true }
 thiserror = { workspace = true}
-chrono = { version = "0.4.43", features = ["serde"] }
-uuid = { version = "1.21.0", features = ["serde", "v7", "v4"] }
+chrono = { version = "0.4.44", features = ["serde"] }
+uuid = { version = "1.23.0", features = ["serde", "v7", "v4"] }
 
 [dev-dependencies]
 serde_json = { workspace = true }
