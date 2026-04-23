@@ -6,7 +6,7 @@ use crate::skuffen::command::{
     journalpost::{
         OpprettInngåendeJournalpost, OpprettInterntNotatJournalpost, OpprettUgåendeJournalpost,
     },
-    sak::{AvsluttSak, OpprettSak},
+    sak::{AvsluttSak, OpprettSak, SettSaksansvarlig},
 };
 
 /// Commands støttet av Skuffen command API.
@@ -17,6 +17,7 @@ pub enum Command {
     OpprettUtgåendeJournalpost(OpprettUgåendeJournalpost),
     OpprettInterntNotatJournalpost(OpprettInterntNotatJournalpost),
     AvsluttSak(AvsluttSak),
+    SettSaksansvarlig(SettSaksansvarlig),
 }
 
 /// Envelope for commands inkl. ids brukt for idempotency og tracing.

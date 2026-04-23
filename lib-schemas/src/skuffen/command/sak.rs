@@ -55,3 +55,11 @@ pub enum Arkivdel {
     Tilsynsdivisjonene, // Mappes til "SAK"
     Hovedkontoret,      // Mappes til "SAKHK"
 }
+
+/// Command for å sette saksansvarlig på en sak.
+#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
+pub struct SettSaksansvarlig {
+    pub sak_key: crate::skuffen::query::queries::SakKey,
+    pub saksbehandler_id: String,
+    pub saksbehandler_enhet: String,
+}
