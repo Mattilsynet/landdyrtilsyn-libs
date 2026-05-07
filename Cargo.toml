@@ -8,14 +8,17 @@ serde_json = "1.0.149"
 secrecy = "0.10.3"
 tracing = "0.1.44"
 thiserror = "2.0.18"
-reqwest = { version = "0.13.2", features = ["json","rustls", "form", "http2"], default-features = false }
+reqwest = { version = "0.13.3", features = ["json","rustls", "form", "http2"], default-features = false }
 reqwest-retry = "0.9.1"
 reqwest-middleware = { version = "0.5.1", features = ["json", "form"] }
 
 chrono = { version = "0.4.44", features = ["serde"] }
-uuid = { version = "1.23.0", features = ["v4"] }
+uuid = { version = "1.23.1", features = ["v4"] }
 bytes = "1.11.1"
 
-tokio = { version = "1.51.0", features = ["rt-multi-thread", "macros"] }
+tokio = { version = "1.52.2", features = ["rt-multi-thread", "macros"] }
 
 base64 = "0.22.1"
+
+# RUSTSEC-2026-0099
+rustls-webpki = "0.103.13"
