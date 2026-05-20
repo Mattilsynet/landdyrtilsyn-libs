@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 secrecy = { workspace = true}
-jsonwebtoken = { version = "10.3.0", default-features = false, features = ["aws_lc_rs"] }
+jsonwebtoken = { version = "10.4.0", default-features = false, features = ["aws_lc_rs"] }
 rustls = { version = "0.23.40", features = ["aws_lc_rs"] }
 
 serde = {workspace = true}
