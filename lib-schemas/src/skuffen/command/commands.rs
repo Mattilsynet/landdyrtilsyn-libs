@@ -85,6 +85,23 @@ pub enum CommandReceipt {
     Error { message: String, command_id: Uuid },
 }
 
+/// Kvittering fra `arkiv.arkiver` request-reply.
+///
+/// Bruker bevisst serde default externally tagged enum-shape, f.eks.
+/// `{ "Ok": { "command_ids": [...] } }`, slik at wire-formatet speiler
+/// Rust-varianten direkte. Dette avviker fra `CommandReceipt`, som er en
+/// separat singular receipt-type.
+///
+/// `Ok` betyr at hele command sequence er mottatt og akseptert for videre
+/// prosessering. `command_ids` inneholder alle command ids i den aksepterte
+/// sekvensen i innsendt rekkefølge. `Error` betyr at hele sekvensen ble
+/// avvist; ingen partial acceptance uttrykkes i denne typen.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum ArkiveringKvittering {
+    Ok { command_ids: Vec<Uuid> },
+    Error { message: String },
+}
+
 /// Asynkrone command status updates publisert på JetStream.
 /// Brukes for å følge lifecycle events (validation, execution, retry, blocked, etc.).
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -97,4 +114,58 @@ pub struct CommandStatusEvent {
     pub attempt: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timestamp: Option<String>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ArkiveringKvittering;
+    use serde_json::json;
+    use uuid::Uuid;
+
+    #[test]
+    fn arkivering_kvittering_ok_uses_default_externally_tagged_shape() {
+        let first_command_id = Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap();
+        let second_command_id = Uuid::parse_str("00000000-0000-0000-0000-000000000002").unwrap();
+        let kvittering = ArkiveringKvittering::Ok {
+            command_ids: vec![first_command_id, second_command_id],
+        };
+
+        let value = serde_json::to_value(&kvittering).unwrap();
+
+        assert_eq!(
+            value,
+            json!({
+                "Ok": {
+                    "command_ids": [
+                        "00000000-0000-0000-0000-000000000001",
+                        "00000000-0000-0000-0000-000000000002"
+                    ]
+                }
+            })
+        );
+
+        let roundtrip: ArkiveringKvittering = serde_json::from_value(value).unwrap();
+        assert_eq!(roundtrip, kvittering);
+    }
+
+    #[test]
+    fn arkivering_kvittering_error_uses_default_externally_tagged_shape() {
+        let kvittering = ArkiveringKvittering::Error {
+            message: "Invalid command sequence".to_string(),
+        };
+
+        let value = serde_json::to_value(&kvittering).unwrap();
+
+        assert_eq!(
+            value,
+            json!({
+                "Error": {
+                    "message": "Invalid command sequence"
+                }
+            })
+        );
+
+        let roundtrip: ArkiveringKvittering = serde_json::from_value(value).unwrap();
+        assert_eq!(roundtrip, kvittering);
+    }
 }

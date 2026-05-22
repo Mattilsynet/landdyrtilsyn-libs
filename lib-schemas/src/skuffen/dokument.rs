@@ -68,7 +68,10 @@ mod tests {
 
         let json = serde_json::to_value(&dokument).expect("serialize dokument");
 
-        assert_eq!(json["form"]["Bytes"]["dokument_referanse"], dokument_referanse.to_string());
+        assert_eq!(
+            json["form"]["Bytes"]["dokument_referanse"],
+            dokument_referanse.to_string()
+        );
         assert_eq!(json["form"]["Bytes"]["filtype"], "PDF");
 
         let roundtrip: Dokument = serde_json::from_value(json).expect("deserialize dokument");
@@ -89,7 +92,10 @@ mod tests {
 
         let json = serde_json::to_value(&dokument).expect("serialize dokument");
 
-        assert_eq!(json["form"]["HtmlTemplate"]["mal_referanse"], mal_referanse.to_string());
+        assert_eq!(
+            json["form"]["HtmlTemplate"]["mal_referanse"],
+            mal_referanse.to_string()
+        );
         assert_eq!(json["form"]["HtmlTemplate"]["felter"][0], "Saksnummer");
 
         let roundtrip: Dokument = serde_json::from_value(json).expect("deserialize dokument");
