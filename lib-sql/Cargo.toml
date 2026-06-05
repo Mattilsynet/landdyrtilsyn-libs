@@ -9,7 +9,7 @@ edition = "2024"
 secrecy = { workspace = true }
 sqlx = { version = "0.9.0",  default-features = false, features = [
     "runtime-tokio",
-    "runtime-tokio-rustls",
+    "tls-rustls",
     "postgres",
     "migrate",
     "uuid",
