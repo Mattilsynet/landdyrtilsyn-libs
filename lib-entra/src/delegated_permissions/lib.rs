@@ -55,7 +55,7 @@ async fn fetch_member_of(token: &SecretString) -> Result<Vec<GraphUserMemberOf>>
         let page: MemberOfPage =
             serde_json::from_str(&body).map_err(|e| EntraError::Deserialize(e.to_string()))?;
 
-        all.extend(page.value.into_iter());
+        all.extend(page.value);
 
         if let Some(next) = page.next_link {
             url = next;
