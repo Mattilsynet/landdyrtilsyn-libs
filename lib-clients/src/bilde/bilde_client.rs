@@ -23,7 +23,7 @@ impl BildeClient {
     ) -> Result<(Vec<u8>, String)> {
         let url = format!(
             "{}/kategorier/bilder/{}/{}?filter.app={}",
-            &self.api_client.get_base_url(),
+            self.api_client.get_base_url(),
             bilde_id,
             storrelse,
             filter,
@@ -97,7 +97,7 @@ impl BildeClient {
     ) -> Result<ImageMetaData> {
         let url = format!(
             "{}/kategorier/bilder/{}?filter.app={}",
-            &self.api_client.get_base_url(),
+            self.api_client.get_base_url(),
             bilde_id,
             filter,
         );

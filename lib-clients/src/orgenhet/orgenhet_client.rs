@@ -74,7 +74,7 @@ impl OrgEnhetClient {
     pub async fn hent_alle_ansatte(&self) -> Result<Vec<Ansatt>> {
         let url = format!(
             "{}/ansatte?page.size=2000&page.number=0",
-            &self.api_client.get_base_url(),
+            self.api_client.get_base_url(),
         );
 
         info!("Henter alle ansatte fra: {:?}", url);
@@ -115,7 +115,7 @@ impl OrgEnhetClient {
     }
 
     pub async fn hent_ansatt_med_brukernavn(&self, brukernavn: String) -> Result<Ansatt> {
-        let url = format!("{}/ansatte/{}", &self.api_client.get_base_url(), brukernavn);
+        let url = format!("{}/ansatte/{}", self.api_client.get_base_url(), brukernavn);
 
         info!("Henter ansatt med brukernavn fra: {:?}", url);
 
@@ -154,7 +154,7 @@ impl OrgEnhetClient {
     pub async fn hent_ansatte_i_seksjon(&self, seksjon_id: String) -> Result<Vec<Ansatt>> {
         let url = format!(
             "{}/seksjoner/{}/ansatte?page.size=2000&page.number=0",
-            &self.api_client.get_base_url(),
+            self.api_client.get_base_url(),
             seksjon_id
         );
 
@@ -196,7 +196,7 @@ impl OrgEnhetClient {
     pub async fn hent_ansatte_i_avdeling(&self, avdeling_id: String) -> Result<Vec<Ansatt>> {
         let url = format!(
             "{}/kontorer/{}/ansatte?page.size=2000&page.number=0",
-            &self.api_client.get_base_url(),
+            self.api_client.get_base_url(),
             avdeling_id
         );
 
@@ -242,7 +242,7 @@ impl OrgEnhetClient {
     ) -> Result<Orgenhet> {
         let url = format!(
             "{}/orgenheter/parenttype/{}/id/{}",
-            &self.api_client.get_base_url(),
+            self.api_client.get_base_url(),
             orgenhet_type,
             id
         );
@@ -283,7 +283,7 @@ impl OrgEnhetClient {
     }
 
     pub async fn hent_regioner(&self) -> Result<Vec<Region>> {
-        let url = format!("{}/regioner", &self.api_client.get_base_url(),);
+        let url = format!("{}/regioner", self.api_client.get_base_url(),);
 
         info!("Henter regioner fra: {:?}", url);
 
@@ -321,7 +321,7 @@ impl OrgEnhetClient {
     }
 
     pub async fn hent_avdelinger(&self) -> Result<Vec<Avdeling>> {
-        let url = format!("{}/avdelinger", &self.api_client.get_base_url(),);
+        let url = format!("{}/avdelinger", self.api_client.get_base_url(),);
 
         info!("Henter avdelinger fra: {:?}", url);
 
@@ -360,7 +360,7 @@ impl OrgEnhetClient {
     }
 
     pub async fn hent_seksjoner(&self) -> Result<Vec<Seksjon>> {
-        let url = format!("{}/seksjoner", &self.api_client.get_base_url(),);
+        let url = format!("{}/seksjoner", self.api_client.get_base_url(),);
 
         info!("Henter seksjoner fra: {:?}", url);
 

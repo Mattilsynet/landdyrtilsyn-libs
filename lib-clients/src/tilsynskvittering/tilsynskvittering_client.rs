@@ -34,7 +34,7 @@ impl TilsynskvitteringClient {
     ) -> Result<Vec<TilsynsobjektKvittering>, ApiError> {
         let url = format!(
             "{}/v1/tilsynskvitteringer/tilsynsobjekter/info-tidligere-tilsyn",
-            &self.api_client.get_base_url(),
+            self.api_client.get_base_url(),
         );
 
         let mut headers = HeaderMap::new();

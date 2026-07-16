@@ -45,7 +45,7 @@ impl EjbClient {
             Err(e) => return Err(e),
         };
 
-        let url = format!("{}/v1/tilfeller", &self.api_client.get_base_url());
+        let url = format!("{}/v1/tilfeller", self.api_client.get_base_url());
         let url = append_filter_to_url(&url, &filter, Some(limit)).map_err(|e| {
             ApiError::ValidationError(format!("Failed to append filter to URL: {e}"))
         })?;
@@ -110,7 +110,7 @@ impl EjbClient {
             Err(e) => return Err(e),
         };
 
-        let url = format!("{}/v1/begrensninger", &self.api_client.get_base_url());
+        let url = format!("{}/v1/begrensninger", self.api_client.get_base_url());
         let mut url = append_filter_to_url(&url, &filter, Some(limit)).map_err(|e| {
             ApiError::ValidationError(format!("Failed to append filter to URL: {e}"))
         })?;

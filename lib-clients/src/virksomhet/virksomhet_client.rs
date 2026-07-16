@@ -18,7 +18,7 @@ impl VirksomhetClient {
     pub async fn get_virksomhet(&self, orgnr: String) -> Result<Virksomhet, ApiError> {
         let url = format!(
             "{}/virksomheter/orgnummer/{}",
-            &self.api_client.get_base_url(),
+            self.api_client.get_base_url(),
             orgnr,
         );
 
@@ -57,7 +57,7 @@ impl VirksomhetClient {
     ) -> Result<Vec<Underenhet>, ApiError> {
         let url = format!(
             "{}/virksomheter/{}/underenheter",
-            &self.api_client.get_base_url(),
+            self.api_client.get_base_url(),
             orgnr,
         );
 
