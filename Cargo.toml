@@ -14,8 +14,8 @@ reqwest-middleware = { version = "0.5.2", features = ["json", "form"] }
 
 chrono = { version = "0.4.45", features = ["serde"] }
 uuid = { version = "1.24.0", features = ["v4"] }
-bytes = "1.12.1"
-anyhow = "1.0.103"
+bytes = "1"
+anyhow = "1.0"
 
 tokio = { version = "1.52.3", features = ["rt-multi-thread", "macros"] }
 
