@@ -6,33 +6,18 @@ use crate::skuffen::{
 };
 use crate::typer::{organisasjonsnummer::Organisasjonsnummer, personnummer::Personnummer};
 
-/// Type korrespondansepart: privatperson eller virksomhet.
-///
-/// Uttrykker intensjon, ikke vendor-mekanikk. Kontrakten skiller kun på det
-/// domenet trenger å vite — om motparten er en person eller en virksomhet.
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub enum Parttype {
     Person,
     Virksomhet,
 }
 
-/// En korrespondansepart uten utsending.
-///
-/// Brukes for avsender på inngående journalposter og for mottaker på
-/// utgående journalposter der det ikke skal skje noen faktisk utsending.
-/// Bærer kun navn og parttype — ingen adresse eller identifikator, fordi
-/// ingen forsendelse skal adresseres.
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct Korrespondansepart {
     pub navn: String,
     pub parttype: Parttype,
 }
 
-/// Identifikator for en mottaker ved utsending.
-///
-/// Erstatter den tidligere `MottakerId` (Person/Organisasjon) fra
-/// `journalpost.rs`. Person identifiseres med validert fødselsnummer,
-/// virksomhet med validert organisasjonsnummer.
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub enum MottakerId {
     Person {
@@ -43,7 +28,6 @@ pub enum MottakerId {
     },
 }
 
-/// Postadresse for en utsendingsmottaker.
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct Postadresse {
     pub adresse: String,
@@ -51,11 +35,6 @@ pub struct Postadresse {
     pub poststed: String,
 }
 
-/// En mottaker som skal motta en faktisk utsending.
-///
-/// Krever både identifikator og postadresse, fordi en forsendelse må kunne
-/// adresseres. Dette skiller seg bevisst fra [`Korrespondansepart`], som ikke
-/// medfører utsending.
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct Utsendingsmottaker {
     pub navn: String,
@@ -63,7 +42,6 @@ pub struct Utsendingsmottaker {
     pub adresse: Postadresse,
 }
 
-/// Lag en inngående journalpost.
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct OpprettInngåendeJournalpost {
     #[serde(flatten)]
@@ -71,15 +49,13 @@ pub struct OpprettInngåendeJournalpost {
     pub avsender: Korrespondansepart,
 }
 
-/// Lag en utgående journalpost uten faktisk utsending.
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct OpprettUtgåendeJournalpost {
     #[serde(flatten)]
     pub felles: JournalpostCommon,
-    pub mottaker: Korrespondansepart,
+    pub mottakere: Vec<Korrespondansepart>,
 }
 
-/// Lag en utgående journalpost med faktisk utsending til én eller flere mottakere.
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct OpprettUtgåendeJournalpostMedUtsending {
     #[serde(flatten)]
@@ -87,23 +63,12 @@ pub struct OpprettUtgåendeJournalpostMedUtsending {
     pub mottakere: Vec<Utsendingsmottaker>,
 }
 
-/// Lag et internt notat.
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct OpprettInterntNotatJournalpost {
     #[serde(flatten)]
     pub felles: JournalpostCommon,
 }
 
-/// Felles felter delt av alle journalpost-opprettingskommandoer.
-///
-/// NB: Denne structen brukes med `#[serde(flatten)]` i kommandoene over.
-/// `deny_unknown_fields` er derfor bevisst *utelatt* her — kombinasjonen
-/// `flatten` + `deny_unknown_fields` er offisielt ustøttet i serde. Streng
-/// felt-validering hører eventuelt hjemme på de ytre, ikke-flattenede
-/// kommando-structene.
-///
-/// `tilgjengelighet` er en nested nøkkel (ALDRI flatten), slik at den
-/// eksternt taggede [`Tilgjengelighet`]-shapen bevares på wire.
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct JournalpostCommon {
     pub client_reference: Uuid,

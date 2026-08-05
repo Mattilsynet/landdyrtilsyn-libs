@@ -2,18 +2,11 @@ use crate::error::{ParseError, Result, SchemasError};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-/// Tilgangskode som uttrykker at et objekt er skjermet.
-///
-/// Kontrakten uttrykker intensjon, ikke vendor-mekanikk: koden er en validert,
-/// ikke-tom verdi. Validering skjer ved konstruksjon og ved deserialisering,
-/// slik at en skjerming aldri kan mangle en kode.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(try_from = "String", into = "String")]
 pub struct Tilgangskode(String);
 
 impl Tilgangskode {
-    /// Lag en validert tilgangskode. Non-empty er eneste invariant på
-    /// kontraktsnivå; kodeverket eies av arkivet, ikke av wire-kontrakten.
     pub fn new(kode: impl Into<String>) -> Result<Self> {
         let kode = kode.into();
         if kode.trim().is_empty() {
@@ -24,7 +17,6 @@ impl Tilgangskode {
         Ok(Self(kode))
     }
 
-    /// Returner rå tilgangskode-string.
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -49,18 +41,11 @@ impl From<Tilgangskode> for String {
     }
 }
 
-/// Rettslig hjemmel for skjerming.
-///
-/// Skjerming uten hjemmel skal være urepresenterbar: en [`Tilgangskode`]
-/// opptrer aldri alene i kontrakten (se [`Tilgjengelighet::Skjermet`]), og
-/// hjemmelen er alltid en validert, ikke-tom verdi.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(try_from = "String", into = "String")]
 pub struct Tilgangshjemmel(String);
 
 impl Tilgangshjemmel {
-    /// Lag en validert tilgangshjemmel. Non-empty er eneste invariant på
-    /// kontraktsnivå.
     pub fn new(hjemmel: impl Into<String>) -> Result<Self> {
         let hjemmel = hjemmel.into();
         if hjemmel.trim().is_empty() {
@@ -71,7 +56,6 @@ impl Tilgangshjemmel {
         Ok(Self(hjemmel))
     }
 
-    /// Returner rå tilgangshjemmel-string.
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -96,21 +80,9 @@ impl From<Tilgangshjemmel> for String {
     }
 }
 
-/// Tilgjengeligheten til en sak eller journalpost.
-///
-/// Modellen uttrykker *intensjon*, ikke vendor-mekanikk. Vi eksponerer ikke
-/// person/unntattOffentlighet-booleans, GENERELL/DIG-flagg eller andre
-/// arkivspesifikke felter. Enten er noe offentlig, eller så er det skjermet
-/// *med* en hjemmel — skjerming uten hjemmel er dermed urepresenterbart.
-///
-/// Serialiseres eksternt tagget (serde default), jf. SKU-0004:
-/// - `Offentlig` -> `"Offentlig"`
-/// - `Skjermet`  -> `{ "Skjermet": { "tilgangskode": ..., "tilgangshjemmel": ... } }`
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Tilgjengelighet {
-    /// Objektet er offentlig tilgjengelig.
     Offentlig,
-    /// Objektet er skjermet med tilhørende hjemmel.
     Skjermet {
         tilgangskode: Tilgangskode,
         tilgangshjemmel: Tilgangshjemmel,

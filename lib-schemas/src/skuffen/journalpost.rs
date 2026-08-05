@@ -3,11 +3,9 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 use uuid::Uuid;
 
-/// Identifier for journalposter lagret i arkivet.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct JournalpostId(pub String);
 
-/// Keys for å hente journalposter.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 #[serde(tag = "type", content = "value", rename_all = "camelCase")]
 pub enum JournalpostKey {
@@ -15,17 +13,11 @@ pub enum JournalpostKey {
     JournalpostId(JournalpostId),
 }
 
-/// Norsk postnummer (4 ASCII-siffer).
-///
-/// Følger newtype-standarden i kontrakten: validert konstruksjon og
-/// bare-string serde. Postnummer er en del av en [`Postadresse`] og
-/// valideres ved konstruksjon og deserialisering.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(try_from = "String", into = "String")]
 pub struct Postnummer(String);
 
 impl Postnummer {
-    /// Lag et validert postnummer: non-empty og nøyaktig 4 ASCII-siffer.
     pub fn new(postnummer: impl Into<String>) -> Result<Self> {
         let postnummer = postnummer.into();
         if postnummer.is_empty() {
@@ -41,7 +33,6 @@ impl Postnummer {
         Ok(Self(postnummer))
     }
 
-    /// Returner rå postnummer-string.
     pub fn as_str(&self) -> &str {
         &self.0
     }
