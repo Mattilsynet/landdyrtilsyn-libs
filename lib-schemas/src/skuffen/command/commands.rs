@@ -4,7 +4,8 @@ use uuid::Uuid;
 
 use crate::skuffen::command::{
     journalpost::{
-        OpprettInngåendeJournalpost, OpprettInterntNotatJournalpost, OpprettUgåendeJournalpost,
+        OpprettInngåendeJournalpost, OpprettInterntNotatJournalpost, OpprettUtgåendeJournalpost,
+        OpprettUtgåendeJournalpostMedUtsending,
     },
     sak::{AvsluttSak, OpprettSak, SettSaksansvarlig},
 };
@@ -14,7 +15,8 @@ use crate::skuffen::command::{
 pub enum Command {
     OpprettSak(OpprettSak),
     OpprettInngåendeJournalpost(OpprettInngåendeJournalpost),
-    OpprettUtgåendeJournalpost(OpprettUgåendeJournalpost),
+    OpprettUtgåendeJournalpost(OpprettUtgåendeJournalpost),
+    OpprettUtgåendeJournalpostMedUtsending(OpprettUtgåendeJournalpostMedUtsending),
     OpprettInterntNotatJournalpost(OpprettInterntNotatJournalpost),
     AvsluttSak(AvsluttSak),
     SettSaksansvarlig(SettSaksansvarlig),

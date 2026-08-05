@@ -1,8 +1,7 @@
-use crate::error::{Result, SchemasError};
+use crate::error::{ParseError, Result, SchemasError};
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use uuid::Uuid;
-
-use crate::typer::{organisasjonsnummer::Organisasjonsnummer, personnummer::Personnummer};
 
 /// Identifier for journalposter lagret i arkivet.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
@@ -16,60 +15,55 @@ pub enum JournalpostKey {
     JournalpostId(JournalpostId),
 }
 
-/// Recipient definition brukt ved utsending.
-#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
-pub struct UtsendingMottaker {
-    pub navn: String,
-    pub adresse: String,
-    pub postnummer: String,
-    pub poststed: String,
-    pub id: MottakerId,
+/// Norsk postnummer (4 ASCII-siffer).
+///
+/// Følger newtype-standarden i kontrakten: validert konstruksjon og
+/// bare-string serde. Postnummer er en del av en [`Postadresse`] og
+/// valideres ved konstruksjon og deserialisering.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(try_from = "String", into = "String")]
+pub struct Postnummer(String);
+
+impl Postnummer {
+    /// Lag et validert postnummer: non-empty og nøyaktig 4 ASCII-siffer.
+    pub fn new(postnummer: impl Into<String>) -> Result<Self> {
+        let postnummer = postnummer.into();
+        if postnummer.is_empty() {
+            return Err(SchemasError::ParseError(ParseError::Message(
+                "postnummer er tomt".to_string(),
+            )));
+        }
+        if postnummer.len() != 4 || !postnummer.chars().all(|c| c.is_ascii_digit()) {
+            return Err(SchemasError::ParseError(ParseError::Message(format!(
+                "ugyldig postnummer '{postnummer}'; forventet 4 siffer"
+            ))));
+        }
+        Ok(Self(postnummer))
+    }
+
+    /// Returner rå postnummer-string.
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
 }
 
-/// Recipient identifier (person eller organization).
-#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
-pub enum MottakerId {
-    Person {
-        personnummer: Personnummer,
-    },
-    Organisasjon {
-        organisasjonsnummer: Organisasjonsnummer,
-    },
+impl fmt::Display for Postnummer {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.0)
+    }
 }
 
-/// Sender wrapper med flattened fields.
-#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
-pub struct Avsender {
-    #[serde(flatten)]
-    avsender_mottaker: AvsenderMottaker,
+impl TryFrom<String> for Postnummer {
+    type Error = SchemasError;
+    fn try_from(value: String) -> Result<Self> {
+        Self::new(value)
+    }
 }
 
-/// Recipient wrapper med flattened fields.
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Mottaker {
-    #[serde(flatten)]
-    avsender_mottaker: AvsenderMottaker,
-}
-
-//TODO: Håndtere kopi
-
-/// Common sender/recipient fields for journalposter.
-#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
-pub struct AvsenderMottaker {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub navn: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub adresse: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub postnummer: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub poststed: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub land: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub id: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub id_type: Option<String>,
+impl From<Postnummer> for String {
+    fn from(value: Postnummer) -> Self {
+        value.0
+    }
 }
 
 /// Journalpost types mappet til archive codes.
@@ -153,5 +147,26 @@ impl Journalpoststatus {
             }
         };
         Ok(journalpoststatus)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn postnummer_validering_og_bare_string_serde() {
+        assert!(Postnummer::new("").is_err());
+        assert!(Postnummer::new("123").is_err());
+        assert!(Postnummer::new("12345").is_err());
+        assert!(Postnummer::new("12a4").is_err());
+        let p = Postnummer::new("0350").unwrap();
+        assert_eq!(p.as_str(), "0350");
+        assert_eq!(p.to_string(), "0350");
+        assert_eq!(serde_json::to_value(&p).unwrap(), json!("0350"));
+        let back: Postnummer = serde_json::from_value(json!("0350")).unwrap();
+        assert_eq!(back, p);
+        assert!(serde_json::from_value::<Postnummer>(json!("12")).is_err());
     }
 }

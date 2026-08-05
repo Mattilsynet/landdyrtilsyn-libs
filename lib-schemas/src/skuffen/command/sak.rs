@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 use crate::skuffen::{
     sak::{Ordningsverdi, Sakstittel},
-    tilgang::Tilgang,
+    tilgang::Tilgjengelighet,
 };
 
 /// Command for oppretting av sak i arkivet.
@@ -34,8 +34,8 @@ pub struct OpprettSak {
     /// Min length: 1
     pub ordningsverdi: Ordningsverdi,
 
-    /// Brukes ved skjerming.
-    pub tilgang: Option<Tilgang>,
+    /// Tilgjengelighet for saken. Skjerming uttrykkes med hjemmel.
+    pub tilgjengelighet: Tilgjengelighet,
     // VirksomhetsmappeId kommer fra saksbehandling i MATS.
     // Dersom denne er inkludert, vil den opprettede saken knyttes til virksomheten via tilleggsattributt1 på saken.
     // Flere saker kan være knyttet mot samme VirksomhetsmappeId.
