@@ -7,12 +7,24 @@ const SAKSTITTEL_MAX_LENGTH: usize = 256;
 
 /// Tittel for en sak, validert for non-empty og max length.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
-pub struct Sakstittel(pub String);
+#[serde(try_from = "String", into = "String")]
+pub struct Sakstittel(String);
 
 impl Sakstittel {
     /// Returner en redacted tittel for UO-handling.
     pub fn uo_tittel(&self) -> Sakstittel {
         Sakstittel("*****".to_string())
+    }
+
+    /// Rå tittel-string.
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl From<Sakstittel> for String {
+    fn from(value: Sakstittel) -> Self {
+        value.0
     }
 }
 
@@ -216,6 +228,18 @@ impl fmt::Display for Saksnummer {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn sakstittel_deserialisering_validerer() {
+        // Gyldig tittel deserialiserer.
+        assert!(serde_json::from_value::<Sakstittel>(serde_json::json!("Gyldig tittel")).is_ok());
+        // Tom tittel avvises.
+        assert!(serde_json::from_value::<Sakstittel>(serde_json::json!("")).is_err());
+        assert!(serde_json::from_value::<Sakstittel>(serde_json::json!("   ")).is_err());
+        // For lang tittel (> 256) avvises ved deserialisering.
+        let long = "A".repeat(257);
+        assert!(serde_json::from_value::<Sakstittel>(serde_json::json!(long)).is_err());
+    }
 
     #[test]
     fn ordningsverdi_string_conversion() {
