@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 /// Norsk national identification number (11 digits).
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(try_from = "String", into = "String")]
 pub struct Personnummer(String);
 
 impl Personnummer {
@@ -47,6 +48,19 @@ impl Personnummer {
     }
 }
 
+impl TryFrom<String> for Personnummer {
+    type Error = &'static str;
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Self::new(value)
+    }
+}
+
+impl From<Personnummer> for String {
+    fn from(value: Personnummer) -> Self {
+        value.0
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -59,5 +73,11 @@ mod tests {
     #[test]
     fn invalid_personnummer() {
         assert!(Personnummer::new("01010101007").is_err());
+    }
+
+    #[test]
+    fn deserialisering_avviser_ugyldig() {
+        assert!(serde_json::from_value::<Personnummer>(serde_json::json!("tull")).is_err());
+        assert!(serde_json::from_value::<Personnummer>(serde_json::json!("01010101006")).is_ok());
     }
 }

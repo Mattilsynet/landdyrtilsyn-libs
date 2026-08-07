@@ -56,6 +56,7 @@ impl fmt::Display for Sakstittel {
 
 /// Ordningsverdi i arkivnøkkel (Mattilsynet).
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+#[serde(try_from = "String", into = "String")]
 pub struct Ordningsverdi(String);
 
 impl Ordningsverdi {
@@ -95,6 +96,19 @@ impl Ordningsverdi {
 impl fmt::Display for Ordningsverdi {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(&self.0)
+    }
+}
+
+impl TryFrom<String> for Ordningsverdi {
+    type Error = SchemasError;
+    fn try_from(value: String) -> Result<Self> {
+        Self::new(value)
+    }
+}
+
+impl From<Ordningsverdi> for String {
+    fn from(value: Ordningsverdi) -> Self {
+        value.0
     }
 }
 

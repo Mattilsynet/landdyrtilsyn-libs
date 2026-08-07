@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 /// Norsk organization number (9 digits).
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(try_from = "String", into = "String")]
 pub struct Organisasjonsnummer(String);
 
 impl Organisasjonsnummer {
@@ -35,6 +36,19 @@ impl Organisasjonsnummer {
     }
 }
 
+impl TryFrom<String> for Organisasjonsnummer {
+    type Error = &'static str;
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Self::new(value)
+    }
+}
+
+impl From<Organisasjonsnummer> for String {
+    fn from(value: Organisasjonsnummer) -> Self {
+        value.0
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -47,5 +61,13 @@ mod tests {
     #[test]
     fn invalid_orgnr() {
         assert!(Organisasjonsnummer::new("995298776").is_err());
+    }
+
+    #[test]
+    fn deserialisering_avviser_ugyldig() {
+        assert!(serde_json::from_value::<Organisasjonsnummer>(serde_json::json!("tull")).is_err());
+        assert!(
+            serde_json::from_value::<Organisasjonsnummer>(serde_json::json!("995298775")).is_ok()
+        );
     }
 }
