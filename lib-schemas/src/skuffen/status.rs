@@ -4,10 +4,6 @@ use uuid::Uuid;
 use crate::skuffen::{journalpost::JournalpostId, sak::Saksnummer};
 
 /// Kommandoens utfall, publisert på `arkiv.status.<command_id>.kommando`.
-///
-/// Erstatter `SkuffenStatusEventV1`, som modellerte status som `phase` ×
-/// `status`. Den matrisen hadde kombinasjoner som aldri kunne oppstå. Her er
-/// hendelsen flat og uttømmende.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct SkuffenKommandoStatusV1 {
@@ -19,8 +15,6 @@ pub struct SkuffenKommandoStatusV1 {
     /// utelukket. Operasjonsmeldinger kan fortsette å komme etterpå, fordi
     /// søskenoperasjoner kjører videre best effort.
     pub terminal: bool,
-    /// Kun klientvennlig tekst. Skal aldri lekke interne states eller
-    /// stacktraces.
     pub message: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error_code: Option<SkuffenStatusErrorCode>,
@@ -59,9 +53,7 @@ pub enum SkuffenKommandoHendelse {
 /// Én operasjons utfall, publisert på
 /// `arkiv.status.<command_id>.operasjon.<operasjon_id>`.
 ///
-/// En operasjon er ett arkivkall. Meldingene sendes ved forsøksutfall, ikke
-/// ved hver tilstandsendring — blokkeringsårsak er spørrbar tilstand, ikke en
-/// hendelse.
+/// En operasjon er ett arkivkall. Meldingene sendes ved forsøksutfall
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct SkuffenOperasjonStatusV1 {
