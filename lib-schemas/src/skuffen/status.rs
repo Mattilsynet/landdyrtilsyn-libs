@@ -1,56 +1,127 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::skuffen::{dokument::DokumentId, journalpost::JournalpostId, sak::Saksnummer};
+use crate::skuffen::{journalpost::JournalpostId, sak::Saksnummer};
 
-/// Client-facing lifecycle event for Skuffen processing.
+/// Kommandoens utfall, publisert på `arkiv.status.<command_id>.kommando`.
+///
+/// Erstatter `SkuffenStatusEventV1`, som modellerte status som `phase` ×
+/// `status`. Den matrisen hadde kombinasjoner som aldri kunne oppstå. Her er
+/// hendelsen flat og uttømmende.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
-pub struct SkuffenStatusEventV1 {
+pub struct SkuffenKommandoStatusV1 {
     pub command_id: Uuid,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub correlation_id: Option<Uuid>,
-    pub phase: SkuffenStatusPhase,
-    pub status: SkuffenStatus,
+    pub hendelse: SkuffenKommandoHendelse,
+    /// `true` betyr at **utfallet er avgjort**, ikke at flere meldinger er
+    /// utelukket. Operasjonsmeldinger kan fortsette å komme etterpå, fordi
+    /// søskenoperasjoner kjører videre best effort.
     pub terminal: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub error_code: Option<SkuffenStatusErrorCode>,
-    /// Client-safe message only. Skal ikke lekke interne states eller stacktraces.
+    /// Kun klientvennlig tekst. Skal aldri lekke interne states eller
+    /// stacktraces.
     pub message: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub attempt: Option<u32>,
+    pub error_code: Option<SkuffenStatusErrorCode>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sak_client_reference: Option<Uuid>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub saksnummer: Option<Saksnummer>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub journalpost_client_reference: Option<Uuid>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub journalpost_id: Option<JournalpostId>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub dokument_id: Option<Vec<DokumentId>>,
+    pub dokument_client_references: Option<Vec<Uuid>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timestamp: Option<String>,
 }
 
-/// Processing phase exposed to clients.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+/// Hendelser i en kommandos livsløp.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-pub enum SkuffenStatusPhase {
-    Ingest,
-    Validate,
-    Execution,
+pub enum SkuffenKommandoHendelse {
+    /// Mottatt og lagt i kø.
+    Mottatt,
+    /// Validert og sendt til utførelse.
+    Validert,
+    /// Avvist ved validering. Terminal.
+    Avvist,
+    /// Dekomponert til operasjoner; utførelse pågår.
+    Utfores,
+    /// Alle operasjoner er terminalt ok. Terminal.
+    Fullfort,
+    /// Minst én operasjon feilet terminalt. Terminal.
+    Feilet,
 }
 
-/// Simple client-facing outcome for a given phase.
+/// Én operasjons utfall, publisert på
+/// `arkiv.status.<command_id>.operasjon.<operasjon_id>`.
+///
+/// En operasjon er ett arkivkall. Meldingene sendes ved forsøksutfall, ikke
+/// ved hver tilstandsendring — blokkeringsårsak er spørrbar tilstand, ikke en
+/// hendelse.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct SkuffenOperasjonStatusV1 {
+    pub command_id: Uuid,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub correlation_id: Option<Uuid>,
+    pub operasjon_id: Uuid,
+    pub operasjonstype: SkuffenOperasjonstype,
+    pub hendelse: SkuffenOperasjonHendelse,
+    pub terminal: bool,
+    /// Kun klientvennlig tekst.
+    pub message: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error_code: Option<SkuffenStatusErrorCode>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub attempt: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timestamp: Option<String>,
+}
+
+/// Hendelser i en operasjons livsløp.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-pub enum SkuffenStatus {
-    Pending,
+pub enum SkuffenOperasjonHendelse {
+    /// Midlertidig feil. Nytt forsøk kommer.
+    ForsokFeilet,
+    /// Utført. Terminal.
     Ok,
-    Blocked,
-    Retrying,
-    Error,
+    /// Kan ikke utføres. Terminal.
+    Feilet,
+    /// Utfallet er ukjent og må avklares manuelt. Ikke terminal.
+    KreverAvklaring,
+    /// Operasjonen har ikke fullført innen fristen. Advisory — forsøkene
+    /// fortsetter, og ingenting avbrytes.
+    Varsel,
+}
+
+/// Hvilket arkivkall operasjonen er.
+///
+/// `Journalfor`, `SettEkspedert` og `KlargjorForEkspedering` treffer samme
+/// endepunkt i arkivet, men har ulik betydning og eksponeres derfor hver for
+/// seg.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum SkuffenOperasjonstype {
+    OpprettSak,
+    RenderDokument,
+    OpprettJournalpost,
+    LeggTilVedlegg,
+    Journalfor,
+    SettEkspedert,
+    KlargjorForEkspedering,
+    AvventJournalfort,
+    Avskriv,
+    SettSaksansvarlig,
+    AvsluttSak,
 }
 
 /// Client-safe error codes. Disse er bevisst coarse-grained.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum SkuffenStatusErrorCode {
     DuplicateRequest,
@@ -65,62 +136,55 @@ pub enum SkuffenStatusErrorCode {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json::{Value, json};
+    use serde_json::json;
+
+    fn uuid(n: u128) -> Uuid {
+        Uuid::from_u128(n)
+    }
 
     #[test]
-    fn serializes_success_event_with_generated_ids() {
-        let event = SkuffenStatusEventV1 {
-            command_id: Uuid::parse_str("123e4567-e89b-12d3-a456-426614174009").unwrap(),
-            correlation_id: Some(Uuid::parse_str("123e4567-e89b-12d3-a456-426614174000").unwrap()),
-            phase: SkuffenStatusPhase::Execution,
-            status: SkuffenStatus::Ok,
+    fn kommandostatus_serialiseres_med_kontekst() {
+        let event = SkuffenKommandoStatusV1 {
+            command_id: uuid(1),
+            correlation_id: Some(uuid(2)),
+            hendelse: SkuffenKommandoHendelse::Fullfort,
             terminal: true,
+            message: "Forespørselen er fullført.".to_string(),
             error_code: None,
-            message: "Journalpost opprettet.".to_string(),
-            attempt: Some(1),
+            sak_client_reference: Some(uuid(3)),
             saksnummer: Some(Saksnummer::new("2026/123").unwrap()),
+            journalpost_client_reference: Some(uuid(4)),
             journalpost_id: Some(JournalpostId("jp-123".to_string())),
-            dokument_id: Some(vec![
-                DokumentId("dok-1".to_string()),
-                DokumentId("dok-2".to_string()),
-            ]),
+            dokument_client_references: Some(vec![uuid(5), uuid(6)]),
             timestamp: Some("2026-01-01T12:00:00Z".to_string()),
         };
 
         let value = serde_json::to_value(&event).unwrap();
 
+        assert_eq!(value["hendelse"], "fullfort");
+        assert_eq!(value["terminal"], true);
+        assert_eq!(value["saksnummer"], "2026/123");
+        assert_eq!(value["journalpost_id"], "jp-123");
         assert_eq!(
-            value,
-            json!({
-                "command_id": "123e4567-e89b-12d3-a456-426614174009",
-                "correlation_id": "123e4567-e89b-12d3-a456-426614174000",
-                "phase": "execution",
-                "status": "ok",
-                "terminal": true,
-                "message": "Journalpost opprettet.",
-                "attempt": 1,
-                "saksnummer": "2026/123",
-                "journalpost_id": "jp-123",
-                "dokument_id": ["dok-1", "dok-2"],
-                "timestamp": "2026-01-01T12:00:00Z"
-            })
+            serde_json::from_value::<SkuffenKommandoStatusV1>(value).unwrap(),
+            event
         );
     }
 
     #[test]
-    fn serializes_error_event_without_optional_ids() {
-        let event = SkuffenStatusEventV1 {
-            command_id: Uuid::parse_str("123e4567-e89b-12d3-a456-426614174010").unwrap(),
-            correlation_id: Some(Uuid::parse_str("123e4567-e89b-12d3-a456-426614174001").unwrap()),
-            phase: SkuffenStatusPhase::Validate,
-            status: SkuffenStatus::Error,
-            terminal: true,
-            error_code: Some(SkuffenStatusErrorCode::InvalidRequest),
-            message: "Request could not be validated.".to_string(),
-            attempt: None,
+    fn kommandostatus_utelater_tomme_felter() {
+        let event = SkuffenKommandoStatusV1 {
+            command_id: uuid(7),
+            correlation_id: None,
+            hendelse: SkuffenKommandoHendelse::Mottatt,
+            terminal: false,
+            message: "Forespørselen er mottatt.".to_string(),
+            error_code: None,
+            sak_client_reference: None,
             saksnummer: None,
+            journalpost_client_reference: None,
             journalpost_id: None,
-            dokument_id: None,
+            dokument_client_references: None,
             timestamp: None,
         };
 
@@ -129,110 +193,119 @@ mod tests {
         assert_eq!(
             value,
             json!({
-                "command_id": "123e4567-e89b-12d3-a456-426614174010",
-                "correlation_id": "123e4567-e89b-12d3-a456-426614174001",
-                "phase": "validate",
-                "status": "error",
-                "terminal": true,
-                "error_code": "INVALID_REQUEST",
-                "message": "Request could not be validated."
+                "command_id": "00000000-0000-0000-0000-000000000007",
+                "hendelse": "mottatt",
+                "terminal": false,
+                "message": "Forespørselen er mottatt."
             })
         );
     }
 
     #[test]
-    fn deserializes_expected_shape() {
+    fn operasjonstatus_serialiseres() {
+        let event = SkuffenOperasjonStatusV1 {
+            command_id: uuid(8),
+            correlation_id: None,
+            operasjon_id: uuid(9),
+            operasjonstype: SkuffenOperasjonstype::KlargjorForEkspedering,
+            hendelse: SkuffenOperasjonHendelse::ForsokFeilet,
+            terminal: false,
+            message: "Midlertidig feil. Nytt forsøk kommer.".to_string(),
+            error_code: Some(SkuffenStatusErrorCode::TemporaryUnavailable),
+            attempt: Some(3),
+            timestamp: None,
+        };
+
+        let value = serde_json::to_value(&event).unwrap();
+
+        assert_eq!(value["operasjonstype"], "klargjor_for_ekspedering");
+        assert_eq!(value["hendelse"], "forsok_feilet");
+        assert_eq!(value["error_code"], "TEMPORARY_UNAVAILABLE");
+        assert_eq!(value["attempt"], 3);
+        assert_eq!(
+            serde_json::from_value::<SkuffenOperasjonStatusV1>(value).unwrap(),
+            event
+        );
+    }
+
+    #[test]
+    fn varsel_er_ikke_terminalt() {
         let value = json!({
-            "command_id": "123e4567-e89b-12d3-a456-426614174011",
-            "correlation_id": "123e4567-e89b-12d3-a456-426614174002",
-            "phase": "ingest",
-            "status": "pending",
+            "command_id": "00000000-0000-0000-0000-00000000000a",
+            "operasjon_id": "00000000-0000-0000-0000-00000000000b",
+            "operasjonstype": "avvent_journalfort",
+            "hendelse": "varsel",
             "terminal": false,
-            "message": "Request accepted.",
-            "saksnummer": "2026/999",
-            "journalpost_id": "jp-999",
-            "dokument_id": ["dok-9"]
+            "message": "Operasjonen har ikke fullført innen fristen."
         });
 
-        let event: SkuffenStatusEventV1 = serde_json::from_value(value).unwrap();
+        let event: SkuffenOperasjonStatusV1 = serde_json::from_value(value).unwrap();
 
-        assert_eq!(
-            event,
-            SkuffenStatusEventV1 {
-                command_id: Uuid::parse_str("123e4567-e89b-12d3-a456-426614174011").unwrap(),
-                correlation_id: Some(
-                    Uuid::parse_str("123e4567-e89b-12d3-a456-426614174002").unwrap(),
-                ),
-                phase: SkuffenStatusPhase::Ingest,
-                status: SkuffenStatus::Pending,
-                terminal: false,
-                error_code: None,
-                message: "Request accepted.".to_string(),
-                attempt: None,
-                saksnummer: Some(Saksnummer::new("2026/999").unwrap()),
-                journalpost_id: Some(JournalpostId("jp-999".to_string())),
-                dokument_id: Some(vec![DokumentId("dok-9".to_string())]),
-                timestamp: None,
-            }
-        );
+        assert_eq!(event.hendelse, SkuffenOperasjonHendelse::Varsel);
+        assert!(!event.terminal);
     }
 
     #[test]
-    fn serializes_without_correlation_id_when_missing() {
-        let event = SkuffenStatusEventV1 {
-            command_id: Uuid::parse_str("123e4567-e89b-12d3-a456-426614174012").unwrap(),
-            correlation_id: None,
-            phase: SkuffenStatusPhase::Execution,
-            status: SkuffenStatus::Retrying,
-            terminal: false,
-            error_code: Some(SkuffenStatusErrorCode::TemporaryUnavailable),
-            message: "Temporary issue while processing command.".to_string(),
-            attempt: Some(2),
-            saksnummer: None,
-            journalpost_id: None,
-            dokument_id: None,
-            timestamp: None,
-        };
-
-        let value = serde_json::to_value(&event).unwrap();
-
-        assert_eq!(
-            value,
-            json!({
-                "command_id": "123e4567-e89b-12d3-a456-426614174012",
-                "phase": "execution",
-                "status": "retrying",
-                "terminal": false,
-                "error_code": "TEMPORARY_UNAVAILABLE",
-                "message": "Temporary issue while processing command.",
-                "attempt": 2
-            })
-        );
-    }
-
-    #[test]
-    fn rejects_unknown_fields() {
+    fn interne_felter_avvises() {
         let value = json!({
-            "command_id": "123e4567-e89b-12d3-a456-426614174013",
-            "correlation_id": "123e4567-e89b-12d3-a456-426614174003",
-            "phase": "execution",
-            "status": "error",
+            "command_id": "00000000-0000-0000-0000-00000000000c",
+            "hendelse": "feilet",
             "terminal": true,
-            "error_code": "PROCESSING_FAILED",
-            "message": "Request could not be completed.",
+            "message": "Forespørselen kunne ikke fullføres.",
             "internal_state": "do-not-leak"
         });
 
-        let error = serde_json::from_value::<SkuffenStatusEventV1>(value).unwrap_err();
+        let error = serde_json::from_value::<SkuffenKommandoStatusV1>(value).unwrap_err();
 
-        let error_message = error.to_string();
-        assert!(error_message.contains("unknown field `internal_state`"));
+        assert!(error.to_string().contains("unknown field `internal_state`"));
     }
 
     #[test]
-    fn dokument_id_serializes_as_string() {
-        let value = serde_json::to_value(DokumentId("dok-42".to_string())).unwrap();
+    fn alle_operasjonstyper_har_stabile_koder() {
+        let forventet = [
+            (SkuffenOperasjonstype::OpprettSak, "opprett_sak"),
+            (SkuffenOperasjonstype::RenderDokument, "render_dokument"),
+            (
+                SkuffenOperasjonstype::OpprettJournalpost,
+                "opprett_journalpost",
+            ),
+            (SkuffenOperasjonstype::LeggTilVedlegg, "legg_til_vedlegg"),
+            (SkuffenOperasjonstype::Journalfor, "journalfor"),
+            (SkuffenOperasjonstype::SettEkspedert, "sett_ekspedert"),
+            (
+                SkuffenOperasjonstype::KlargjorForEkspedering,
+                "klargjor_for_ekspedering",
+            ),
+            (
+                SkuffenOperasjonstype::AvventJournalfort,
+                "avvent_journalfort",
+            ),
+            (SkuffenOperasjonstype::Avskriv, "avskriv"),
+            (
+                SkuffenOperasjonstype::SettSaksansvarlig,
+                "sett_saksansvarlig",
+            ),
+            (SkuffenOperasjonstype::AvsluttSak, "avslutt_sak"),
+        ];
 
-        assert_eq!(value, Value::String("dok-42".to_string()));
+        for (variant, kode) in forventet {
+            assert_eq!(serde_json::to_value(variant).unwrap(), kode);
+        }
+    }
+
+    #[test]
+    fn alle_kommandohendelser_har_stabile_koder() {
+        let forventet = [
+            (SkuffenKommandoHendelse::Mottatt, "mottatt"),
+            (SkuffenKommandoHendelse::Validert, "validert"),
+            (SkuffenKommandoHendelse::Avvist, "avvist"),
+            (SkuffenKommandoHendelse::Utfores, "utfores"),
+            (SkuffenKommandoHendelse::Fullfort, "fullfort"),
+            (SkuffenKommandoHendelse::Feilet, "feilet"),
+        ];
+
+        for (variant, kode) in forventet {
+            assert_eq!(serde_json::to_value(variant).unwrap(), kode);
+        }
     }
 }
