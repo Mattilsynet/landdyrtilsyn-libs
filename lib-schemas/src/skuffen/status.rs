@@ -3,14 +3,14 @@ use uuid::Uuid;
 
 use crate::skuffen::{journalpost::JournalpostId, sak::Saksnummer};
 
-/// Kommandoens utfall, publisert på `arkiv.status.<command_id>.kommando`.
+/// Kommandoens utfall, publisert på `arkiv.status.<command_id>.command`.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
-pub struct SkuffenKommandoStatusV1 {
+pub struct SkuffenCommandStatusV1 {
     pub command_id: Uuid,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub correlation_id: Option<Uuid>,
-    pub hendelse: SkuffenKommandoHendelse,
+    pub hendelse: SkuffenCommandEvent,
     /// `true` betyr at **utfallet er avgjort**, ikke at flere meldinger er
     /// utelukket. Operasjonsmeldinger kan fortsette å komme etterpå, fordi
     /// søskenoperasjoner kjører videre best effort.
@@ -35,7 +35,7 @@ pub struct SkuffenKommandoStatusV1 {
 /// Hendelser i en kommandos livsløp.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-pub enum SkuffenKommandoHendelse {
+pub enum SkuffenCommandEvent {
     /// Mottatt og lagt i kø.
     Mottatt,
     /// Validert og sendt til utførelse.
@@ -135,11 +135,11 @@ mod tests {
     }
 
     #[test]
-    fn kommandostatus_serialiseres_med_kontekst() {
-        let event = SkuffenKommandoStatusV1 {
+    fn command_status_serialiseres_med_kontekst() {
+        let event = SkuffenCommandStatusV1 {
             command_id: uuid(1),
             correlation_id: Some(uuid(2)),
-            hendelse: SkuffenKommandoHendelse::Fullfort,
+            hendelse: SkuffenCommandEvent::Fullfort,
             terminal: true,
             message: "Forespørselen er fullført.".to_string(),
             error_code: None,
@@ -158,17 +158,17 @@ mod tests {
         assert_eq!(value["saksnummer"], "2026/123");
         assert_eq!(value["journalpost_id"], "jp-123");
         assert_eq!(
-            serde_json::from_value::<SkuffenKommandoStatusV1>(value).unwrap(),
+            serde_json::from_value::<SkuffenCommandStatusV1>(value).unwrap(),
             event
         );
     }
 
     #[test]
-    fn kommandostatus_utelater_tomme_felter() {
-        let event = SkuffenKommandoStatusV1 {
+    fn command_status_utelater_tomme_felter() {
+        let event = SkuffenCommandStatusV1 {
             command_id: uuid(7),
             correlation_id: None,
-            hendelse: SkuffenKommandoHendelse::Mottatt,
+            hendelse: SkuffenCommandEvent::Mottatt,
             terminal: false,
             message: "Forespørselen er mottatt.".to_string(),
             error_code: None,
@@ -247,7 +247,7 @@ mod tests {
             "internal_state": "do-not-leak"
         });
 
-        let error = serde_json::from_value::<SkuffenKommandoStatusV1>(value).unwrap_err();
+        let error = serde_json::from_value::<SkuffenCommandStatusV1>(value).unwrap_err();
 
         assert!(error.to_string().contains("unknown field `internal_state`"));
     }
@@ -286,14 +286,14 @@ mod tests {
     }
 
     #[test]
-    fn alle_kommandohendelser_har_stabile_koder() {
+    fn alle_command_events_har_stabile_koder() {
         let forventet = [
-            (SkuffenKommandoHendelse::Mottatt, "mottatt"),
-            (SkuffenKommandoHendelse::Validert, "validert"),
-            (SkuffenKommandoHendelse::Avvist, "avvist"),
-            (SkuffenKommandoHendelse::Utfores, "utfores"),
-            (SkuffenKommandoHendelse::Fullfort, "fullfort"),
-            (SkuffenKommandoHendelse::Feilet, "feilet"),
+            (SkuffenCommandEvent::Mottatt, "mottatt"),
+            (SkuffenCommandEvent::Validert, "validert"),
+            (SkuffenCommandEvent::Avvist, "avvist"),
+            (SkuffenCommandEvent::Utfores, "utfores"),
+            (SkuffenCommandEvent::Fullfort, "fullfort"),
+            (SkuffenCommandEvent::Feilet, "feilet"),
         ];
 
         for (variant, kode) in forventet {
