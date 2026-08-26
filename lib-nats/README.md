@@ -1,97 +1,100 @@
 # lib-nats
 
-Verktøy for NATS/JetStream. Dette biblioteket brukes på tvers av team, og chunked upload er lagt opp som en wire protocol med adskilt sender og mottaker.
+Verktoy for Core NATS og JetStream.
 
-## Chunked uploads
+## Sessionbasert chunked upload
 
-NATS har en maksimumsstørrelse for payload, og i praksis gir payload over noen få MB dårlig ytelse. Derfor bruker vi en chunked upload protocol over NATS headers. Chunk size er 2 MB (decimal, base-10) som standard og er begrenset til 8 MB (decimal) for å holde seg under anbefalt 8 MB max_payload og JetStream 32 MiB enforced limit.
+Protokollen bruker Core NATS request/reply og er laget for idempotent handtering av Core NATS sin at-most-once-levering. Base-subject og begin-queue er konfigurerbare; standardene er `chunked-upload` og `chunked-upload-receivers`.
 
-### Wire format
+### Wire-kontrakt
 
-Chunked uploads identifiseres av headers. Dette gjør det mulig å sende og motta på tvers av applikasjoner.
+Subjects for `{base}`:
 
-Obligatoriske headers:
+- `{base}.begin`
+- `{base}.receiver.{receiver_id}.session.{session_id}.chunk.{index}`
+- `{base}.receiver.{receiver_id}.session.{session_id}.commit`
 
-- `X-Payload-Type`: `chunked-upload`
-- `X-Chunked-Upload-Id`: UUID string
-- `X-Chunk-Index`: zero-based index
-- `X-Chunk-Count`: total chunk count
-- `X-Total-Size`: full payload size i bytes
+Begin er UTF-8 JSON:
 
-Valgfrie headers:
+```json
+{"upload_id":"media-123","size":2500123,"sha256":"<64 lowercase hex>","filename":"optional.pdf","content_type":"application/pdf"}
+```
 
-- `X-Filename`
-- `X-Content-Type`
+Svar er tagget med `status`:
 
-Payload bytes er selve chunk-bytene.
+- `{"status":"ready","receiver_id":"<uuid>","session_id":"<uuid>","chunk_size":2000000,"session_ttl_ms":600000}`
+- `{"status":"already_stored","upload_id":"media-123"}`
+- `{"status":"error","code":"<stable_code>"}`
 
-### Rust inngangspunkt
+Chunks sendes sekvensielt, en request om gangen, som ra bytes. Indeksen ligger i subject. Svar er `{"status":"accepted","index":0}` eller et error-svar. Identiske duplikater aksepteres; konfliktende duplikater, feil rekkefolge og feil chunklengde avvises. Error ved feil rekkefolge inkluderer `expected_index`.
 
-- Sender: `lib-nats/src/chunked_upload/sender.rs` (`publish_chunked_bytes`)
-- Mottaker: `lib-nats/src/chunked_upload/receiver.rs` (`ChunkedUploadAssembler`, `UploadLimits`)
-- Felles protocol: `lib-nats/src/chunked_upload/protocol.rs`
+Commit har tom payload. Serveren verifiserer full storrelse og SHA-256 for den kaller den durable `UploadStore`. Svar er `{"status":"stored","upload_id":"media-123"}` bare etter vellykket, idempotent lagring. Et bounded tombstone-vindu gjor commit-retry trygt nar svaret forsvinner. Ukjente JSON-felt avvises. Rust-feiltekst sendes aldri pa wire.
 
-### Hvordan det fungerer
+### Request/reply og utrulling
 
-- Sender deler payload i chunks og publiserer hver chunk til et Subject.
-- Hver chunk har protocol headers som beskriver upload id, indeks og total størrelse.
-- Mottaker samler chunks per `X-Chunked-Upload-Id` og setter sammen når alle er mottatt.
-- Ferdig payload returneres som `ChunkedPayload` med valgfri filename/content-type metadata.
+Hver server oppretter en UUIDv4 `receiver_id`, subscriber uten queue pa sitt receiver-subject og flusher dette for den joiner begin-queue. Bare begin bruker queue group. Session-state finnes for `ready` sendes.
 
-### Limits og TTL
+Klienten retryer samme chunk ved timeout for den starter en ny session fra begynnelsen. Commit retryes fordi timeout er tvetydig; deretter gjores ny begin, og store-inspect avgjor `already_stored`. Nar en receiver forsvinner, velges en ny via begin-queue. Core NATS antas ikke a vaere durable.
 
-`ChunkedUploadAssembler` validerer payload og beskytter mot ubegrenset minnebruk. Ved feil slettes state for upload-id, og `push` returnerer `Error::FetchError`.
+Ved shutdown stoppes begin-subscription forst. Receiver-subscription betjenes i `shutdown_grace`, slik at pagaende sessions kan fullfores. Ved rolling deploy kan etablerte sessions derfor bli pa sin receiver, mens nye sessions fordeles til resterende replicas. Denne protokollen har ingen v1/v2-token og er ikke wire-kompatibel med den gamle headerprotokollen; bruk et nytt base-subject dersom gamle og nye responders ma leve samtidig.
 
-Standardgrenser:
+### Rust-API
 
-- max upload size: 100 MB
-- max chunk count: 2000
-- max inflight uploads: 100
-- max inflight bytes: 500 MB
-- max chunk size: 8 MB (matcher `MAX_CHUNK_SIZE`)
-- TTL for incomplete uploads: 10 minutter
-
-Egendefinerte grenser:
-
-```rust
-use lib_nats::chunked_upload::receiver::ChunkedUploadAssembler;
-use lib_nats::chunked_upload::UploadLimits;
-
-let limits = UploadLimits {
-    max_upload_size: 100 * 1024 * 1024,
-    max_chunk_count: 2_000,
-    max_inflight_uploads: 100,
-    max_inflight_bytes: 500 * 1024 * 1024,
-    max_chunk_size: 8 * 1024 * 1024,
-    ttl: std::time::Duration::from_secs(10 * 60),
+```rust,no_run
+use std::sync::Arc;
+use bytes::Bytes;
+use lib_nats::chunked_upload::{
+    ChunkedUploadClient, ChunkedUploadClientConfig, ChunkedUploadServer,
+    ChunkedUploadServerConfig, UploadRequest, UploadStore,
 };
 
-let mut assembler = ChunkedUploadAssembler::with_limits(limits);
+# async fn example(
+#     nats: async_nats::Client,
+#     store: Arc<dyn UploadStore>,
+# ) -> Result<(), Box<dyn std::error::Error>> {
+let server = ChunkedUploadServer::new(
+    nats.clone(),
+    ChunkedUploadServerConfig::default(),
+    store,
+)?;
+tokio::spawn(server.run(std::future::pending()));
+
+let client = ChunkedUploadClient::new(nats, ChunkedUploadClientConfig::default());
+let receipt = client.upload(UploadRequest {
+    upload_id: "media-123".to_string(),
+    bytes: Bytes::from_static(b"data"),
+    filename: None,
+    content_type: Some("application/octet-stream".to_string()),
+}).await?;
+# let _ = receipt;
+# Ok(())
+# }
 ```
+
+`UploadStore` er en objekt-safe async trait med `inspect(upload_id)` og `store(CompletedUpload)`. Store-implementasjonen ma lagre atomisk og idempotent pa `upload_id`: samme storrelse/digest skal lykkes, mens annet innhold for samme ID skal gi `UploadStoreError::Conflict`.
+
+### Standardgrenser
+
+- Chunk size: 2 000 000 bytes, maksimum 8 000 000
+- Upload size: 100 MiB
+- Aktive sessions: 100
+- Reserverte bytes: 500 MiB
+- Session TTL: 10 minutter, med periodisk opprydding
+- Commit tombstones: 1 000 i 10 minutter
+- Upload ID: 256 bytes, filename: 1 024 bytes, content type: 255 bytes
+- Shutdown grace: 5 sekunder
+
+NATS-serverens `max_payload` ma vaere minst konfigurert chunk size; standard chunk size krever dermed minst 2 000 000 bytes.
+
+### Cross-account
+
+Eksporter begge Core NATS service-subjects fra serverkontoen:
+
+- `{base}.begin`
+- `{base}.receiver.>`
+
+Importer begge til klientkontoen med samme lokale `{base}`-prefiks. Dynamiske receiver/session-subjects ma ikke omskrives ulikt mellom de to importene. Vanlige NATS service-import replies brukes for request/reply.
 
 ## Object Store
 
-Wrapper for NATS JetStream Object Store, med enkle funksjoner for opplasting og nedlasting.
-
-### Rust inngangspunkt
-
-- `lib-nats/src/object_store.rs`
-
-### Eksempler
-
-```rust
-use lib_nats::object_store;
-
-let jetstream = lib_nats::create_jetstream_instance(client).await;
-let store = object_store::get_or_create_object_store(
-    &jetstream,
-    async_nats::jetstream::object_store::Config {
-        bucket: "saker".to_string(),
-        ..Default::default()
-    },
-)
-.await?;
-
-object_store::store_bytes(&store, "fil.txt", b"data").await?;
-let bytes = object_store::fetch_bytes(&store, "fil.txt").await?;
-```
+`object_store.rs` wrapper NATS JetStream Object Store for opplasting og nedlasting av bytes.
