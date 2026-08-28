@@ -1,4 +1,5 @@
 //! Skuffen domain types, Commands, og Queries.
+pub mod admin;
 pub mod command;
 pub mod dokument;
 pub mod journalpost;

@@ -7,6 +7,11 @@ som integrerer med Skuffen og relaterte systemer.
 ## Modules
 
 - `skuffen`: Commands, queries, og delte domain types brukt av Skuffen-API.
+- `skuffen::admin`: Request/response-kontrakten for Skuffens admin read-subjects
+  (`arkiv.admin.read.command.hent` og `arkiv.admin.read.sak.hent`).
+  Request-typene avviser ukjente felt; response-typene er permissive og
+  rapporterer lagrede koder og fritekst som strings, slik at historisk eller
+  reparasjonstrengende state alltid kan vises.
 - `typer`: Common identifier/value types med valideringshelpers.
 - `error`: Delte error types brukt ved parsing og validering.
 
