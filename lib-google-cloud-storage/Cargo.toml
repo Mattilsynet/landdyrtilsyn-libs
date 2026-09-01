@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 tracing = { workspace = true }
-google-cloud-storage = "1.16.0"
-google-cloud-auth = "1.14.0"
+google-cloud-storage = "1.18.0"
+google-cloud-auth = "1.16.0"
 bytes = { workspace = true }
 serde_json = { workspace = true }

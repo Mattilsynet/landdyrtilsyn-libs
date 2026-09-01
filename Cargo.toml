@@ -3,23 +3,23 @@ members = ["lib-keycloak-client", "lib-auth", "lib-google-cloud-storage", "lib-s
 resolver = "3"
 
 [workspace.dependencies]
-serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0.150"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
 secrecy = "0.10.3"
 tracing = "0.1.44"
-thiserror = "2.0.18"
+thiserror = "2.0.20"
 reqwest = { version = "0.13.4", features = ["json","rustls", "form", "http2"], default-features = false }
 reqwest-retry = "0.9.1"
 reqwest-middleware = { version = "0.5.2", features = ["json", "form"] }
 
 chrono = { version = "0.4.45", features = ["serde"] }
-uuid = { version = "1.24.0", features = ["v4"] }
+uuid = { version = "1.26.0", features = ["v4"] }
 bytes = "1"
 anyhow = "1.0"
 
-tokio = { version = "1.52.3", features = ["rt-multi-thread", "macros"] }
+tokio = { version = "1.53.1", features = ["rt-multi-thread", "macros"] }
 
-base64 = "0.22.1"
+base64 = "0.23.1"
 
 # RUSTSEC-2026-0099
 rustls-webpki = "0.103.13"

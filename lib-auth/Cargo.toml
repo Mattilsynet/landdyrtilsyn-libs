@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 secrecy = { workspace = true}
-jsonwebtoken = { version = "10.4.0", default-features = false, features = ["aws_lc_rs"] }
+jsonwebtoken = { version = "11.0.0", default-features = false, features = ["aws_lc_rs"] }
 rustls = { version = "0.23.42", features = ["aws_lc_rs"] }
 
 serde = {workspace = true}
@@ -13,6 +13,6 @@ tracing = {workspace = true}
 reqwest = {workspace = true}
 axum = {version="0.8.9", default-features = false, features= ["http1"]}
 tower = "0.5.3"
-futures = "0.3.32"
+futures = "0.3.34"
 bytes = {workspace = true}
 tokio = {workspace = true, features =["sync"]}
