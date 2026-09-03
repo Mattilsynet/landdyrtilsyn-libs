@@ -48,6 +48,12 @@ pub enum SkuffenCommandEvent {
     Fullfort,
     /// Minst én operasjon feilet terminalt. Terminal.
     Feilet,
+    /// Minst én operasjon har ukjent utfall og må avklares manuelt.
+    ///
+    /// **Ikke terminal:** utfallet *er* ikke avgjort. Operasjonen kan bli `ok`
+    /// etter at et menneske har ryddet, og foldet over kommandoen må forbli
+    /// monotont.
+    KreverAvklaring,
 }
 
 /// Én operasjons utfall, publisert på
@@ -294,10 +300,29 @@ mod tests {
             (SkuffenCommandEvent::Utfores, "utfores"),
             (SkuffenCommandEvent::Fullfort, "fullfort"),
             (SkuffenCommandEvent::Feilet, "feilet"),
+            (SkuffenCommandEvent::KreverAvklaring, "krever_avklaring"),
         ];
 
         for (variant, kode) in forventet {
             assert_eq!(serde_json::to_value(variant).unwrap(), kode);
         }
+    }
+
+    /// `KreverAvklaring` skal aldri sendes med `terminal: true`. Utfallet er
+    /// ikke avgjort — operasjonen kan bli `ok` etter manuell opprydding, og
+    /// monotonien i foldet må bevares.
+    #[test]
+    fn krever_avklaring_er_ikke_terminalt() {
+        let value = json!({
+            "command_id": "00000000-0000-0000-0000-00000000000d",
+            "hendelse": "krever_avklaring",
+            "terminal": false,
+            "message": "Utfallet er ukjent og må avklares manuelt."
+        });
+
+        let event: SkuffenCommandStatusV1 = serde_json::from_value(value).unwrap();
+
+        assert_eq!(event.hendelse, SkuffenCommandEvent::KreverAvklaring);
+        assert!(!event.terminal);
     }
 }
