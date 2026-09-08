@@ -26,9 +26,19 @@ pub struct GraphUser {
     pub job_title: Option<String>,
     #[serde(rename = "employeeId")]
     pub employeeid: Option<String>,
+    #[serde(rename = "onPremisesExtensionAttributes")]
+    pub on_premises_extension_attributes: Option<OnPremisesExtensionAttributes>,
     #[serde(rename = "memberOf")]
     pub groups: Option<Vec<GraphUserMemberOf>>,
     pub photo: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct OnPremisesExtensionAttributes {
+    #[serde(rename = "extensionAttribute6")]
+    pub extension_attribute6: Option<String>,
+    #[serde(rename = "extensionAttribute10")]
+    pub extension_attribute10: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -60,5 +70,60 @@ impl OboConfig {
             client_id,
             client_secret,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn deserialize_extension_attributes() {
+        let user: GraphUser = serde_json::from_value(serde_json::json!({
+            "id": "user-1",
+            "displayName": "Test User",
+            "employeeId": "123",
+            "onPremisesExtensionAttributes": {
+                "extensionAttribute6": "456",
+                "extensionAttribute10": "department"
+            }
+        }))
+        .unwrap();
+
+        assert_eq!(user.id.as_deref(), Some("user-1"));
+        assert_eq!(user.display_name.as_deref(), Some("Test User"));
+        assert_eq!(user.employeeid.as_deref(), Some("123"));
+        assert!(user.mail.is_none());
+        let attributes = user.on_premises_extension_attributes.unwrap();
+        assert_eq!(attributes.extension_attribute6.as_deref(), Some("456"));
+        assert_eq!(
+            attributes.extension_attribute10.as_deref(),
+            Some("department")
+        );
+        assert_eq!(
+            serde_json::to_value(attributes).unwrap(),
+            serde_json::json!({
+                "extensionAttribute6": "456",
+                "extensionAttribute10": "department"
+            })
+        );
+    }
+
+    #[test]
+    fn deserialize_missing_or_null_optional_attributes() {
+        for json in ["{}", r#"{"onPremisesExtensionAttributes":null}"#] {
+            let user: GraphUser = serde_json::from_str(json).unwrap();
+            assert!(user.on_premises_extension_attributes.is_none());
+        }
+
+        for json in [
+            r#"{"onPremisesExtensionAttributes":{}}"#,
+            r#"{"onPremisesExtensionAttributes":{"extensionAttribute6":null,"extensionAttribute10":null}}"#,
+        ] {
+            let user: GraphUser = serde_json::from_str(json).unwrap();
+            let attributes = user.on_premises_extension_attributes.unwrap();
+            assert!(attributes.extension_attribute6.is_none());
+            assert!(attributes.extension_attribute10.is_none());
+        }
     }
 }
