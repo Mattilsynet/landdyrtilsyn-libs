@@ -12,6 +12,10 @@ som integrerer med Skuffen og relaterte systemer.
   Request-typene avviser ukjente felt; response-typene er permissive og
   rapporterer lagrede koder og fritekst som strings, slik at historisk eller
   reparasjonstrengende state alltid kan vises.
+- `skuffen::query`: Request/response for Skuffens queries, blant annet
+  `arkiv.request.sak.hent` og `arkiv.request.sak.med_journalposter`. Første
+  dokument i en journalposts dokumentliste er hoveddokumentet, og
+  `dokument_dato` er dato og klokkeslett uten tidssone (`NaiveDateTime`).
 - `typer`: Common identifier/value types med valideringshelpers.
 - `error`: Delte error types brukt ved parsing og validering.
 

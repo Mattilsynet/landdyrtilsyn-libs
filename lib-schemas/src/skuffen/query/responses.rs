@@ -1,6 +1,8 @@
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use crate::skuffen::dokument::DokumentId;
 use crate::skuffen::journalpost::{JournalpostId, JournalpostType, Journalpoststatus};
 use crate::skuffen::sak::{Ordningsverdi, Saksnummer, Saksstatus, Sakstittel};
 
@@ -44,8 +46,11 @@ pub struct SakResponse {
     pub journalposter: Option<Vec<JournalpostResponse>>,
 }
 
+/// Metadata for et dokument i arkivet. Første dokument i en journalposts
+/// dokumentliste er hoveddokumentet; resten er vedlegg.
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct DokumentResponse {
+    pub dokument_id: DokumentId,
     pub tittel: String,
     pub filtype: String,
     pub dokument_referanse: Option<Uuid>,
@@ -55,7 +60,8 @@ pub struct DokumentResponse {
 #[serde(deny_unknown_fields)]
 pub struct JournalpostResponse {
     pub tittel: String,
-    pub dokument_dato: String, // TODO: skal være datetime
+    /// Arkivets dokumentdato uten tidssone, f.eks. `2025-10-14T00:00:00`.
+    pub dokument_dato: NaiveDateTime,
     pub journalposttype: JournalpostType,
     pub journalstatus: Journalpoststatus,
     pub tilgjengelighet: TilgjengelighetResponse,
@@ -72,6 +78,59 @@ pub struct JournalpostResponse {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    #[test]
+    fn journalpost_response_har_sonefri_dokumentdato_og_dokument_id() {
+        let value = json!({
+            "tittel": "Vedtak",
+            "dokument_dato": "2025-10-14T00:00:00",
+            "journalposttype": "InterntNotat",
+            "journalstatus": "Midlertidig",
+            "tilgjengelighet": "Offentlig",
+            "saksbehandler": null,
+            "saksbehandler_enhet": null,
+            "dokumenter": [
+                {
+                    "dokument_id": "77357",
+                    "tittel": "Hoveddokument",
+                    "filtype": "PDF",
+                    "dokument_referanse": null
+                }
+            ],
+            "journalpost_id": "51410",
+            "kildesystem": "SKUFFEN"
+        });
+
+        let parsed: JournalpostResponse = serde_json::from_value(value.clone()).unwrap();
+        assert_eq!(
+            parsed.dokument_dato,
+            chrono::NaiveDate::from_ymd_opt(2025, 10, 14)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap()
+        );
+        assert_eq!(parsed.dokumenter[0].dokument_id.as_str(), "77357");
+        assert_eq!(parsed.saksbehandler, None);
+        assert_eq!(serde_json::to_value(&parsed).unwrap(), value);
+    }
+
+    #[test]
+    fn journalpost_response_avviser_dato_uten_klokkeslett() {
+        let value = json!({
+            "tittel": "Vedtak",
+            "dokument_dato": "2025-10-14",
+            "journalposttype": "InterntNotat",
+            "journalstatus": "Midlertidig",
+            "tilgjengelighet": "Offentlig",
+            "saksbehandler": null,
+            "saksbehandler_enhet": null,
+            "dokumenter": [],
+            "journalpost_id": "51410",
+            "kildesystem": "SKUFFEN"
+        });
+
+        assert!(serde_json::from_value::<JournalpostResponse>(value).is_err());
+    }
 
     #[test]
     fn tilgjengelighet_response_speiler_command_side_shape() {
