@@ -20,6 +20,11 @@ let enhet = ansatte.enhet_navn("M12345").await?;
 Hvert kall gjør et oppslag mot JetStream. Tilkobling, credentials og
 NATS-rettigheter til `ansatte` må applikasjonen håndtere.
 
+## Tilgang 
+
+Det er team slakt som eier strømmen så bruk krever en export av strømmen fra slakt sin konto og en import i kontoen den skal brukes.
+Slakt sitt repo: https://github.com/Mattilsynet/kniv/tree/main/jobs/entra-replikator
+
 ## Semantikk
 
 JetStream returnerer meldingen med høyest streamsekvens blant alle subjects som
