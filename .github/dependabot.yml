@@ -9,3 +9,6 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "daily"
+    # Dette tvinger dependabot til å bumpe versjonskravet i Cargo.toml 
+    # selv om det gamle kravet teknisk sett var kompatibelt.
+    versioning-strategy: increase
