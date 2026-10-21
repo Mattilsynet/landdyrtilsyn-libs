@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use crate::skuffen::dokument::DokumentId;
 use crate::skuffen::journalpost::{JournalpostId, JournalpostType, Journalpoststatus};
-use crate::skuffen::sak::{Ordningsverdi, Saksnummer, Saksstatus, Sakstittel};
+use crate::skuffen::sak::{ArkivSakId, Ordningsverdi, Saksnummer, Saksstatus, Sakstittel};
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub enum TilgjengelighetResponse {
@@ -40,6 +40,7 @@ pub struct SakResponse {
     pub tilgjengelighet: TilgjengelighetResponse,
     pub ordningsverdi: Ordningsverdi,
     pub saksnummer: Saksnummer,
+    pub arkiv_sak_id: ArkivSakId,
     pub kildesystem: String,
     pub lukket: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -179,5 +180,26 @@ mod tests {
             ParttypeResponse::Annet("Foretak".to_string())
         );
         assert_eq!(parsed.id.as_deref(), Some("123"));
+    }
+
+    #[test]
+    fn sak_response_har_arkiv_sak_id() {
+        let value = json!({
+            "sakstittel": "Syntetisk sak",
+            "saksbehandler": "Z00001",
+            "saksbehandler_enhet": "M00001",
+            "saksstatus": "UnderBehandling",
+            "tilgjengelighet": "Offentlig",
+            "ordningsverdi": "430",
+            "saksnummer": "2026/123",
+            "arkiv_sak_id": "1042",
+            "kildesystem": "SKUFFEN",
+            "lukket": false
+        });
+
+        let parsed: SakResponse = serde_json::from_value(value.clone()).unwrap();
+        assert_eq!(parsed.arkiv_sak_id.as_str(), "1042");
+        assert_eq!(parsed.saksnummer.as_str(), "2026/123");
+        assert_eq!(serde_json::to_value(&parsed).unwrap(), value);
     }
 }

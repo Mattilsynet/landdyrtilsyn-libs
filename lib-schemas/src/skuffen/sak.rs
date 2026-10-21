@@ -225,6 +225,23 @@ impl fmt::Display for Saksnummer {
     }
 }
 
+/// Identifier for saker i arkivet (Sikri/Elements saksid).
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+pub struct ArkivSakId(pub String);
+
+impl ArkivSakId {
+    /// Returner raw arkiv-sak-id string.
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl fmt::Display for ArkivSakId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
