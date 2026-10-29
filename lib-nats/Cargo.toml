@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 secrecy = { workspace = true }
-async-nats = { version = "0.50.0" }
+async-nats = { workspace = true }
 async-trait = "0.1.92"
 futures = { version = "0.3.34", default-features = false }
 bytes = { workspace = true }
