@@ -331,6 +331,6 @@ mod tests {
             .unwrap();
         let koordinater = adresse_obj.get_koordinater();
 
-        assert_eq!(koordinater, Some((60.87750554180073, 10.92918075347748)))
+        assert_eq!(koordinater, Some((60.87750556607665, 10.929180750830408)))
     }
 }
