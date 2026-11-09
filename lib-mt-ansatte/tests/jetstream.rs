@@ -243,32 +243,6 @@ async fn nyere_ukjent_subject_vinner() {
 }
 
 #[tokio::test]
-async fn enhet_velger_nyeste_melding_pa_tvers_av_ansatte() {
-    let Some(server) = NatsServer::start() else {
-        eprintln!("skipping: nats-server is not installed");
-        return;
-    };
-    let (ansatte, context) = jetstream(&server).await;
-    publiser(
-        &context,
-        "ansatte.M10000.99990001",
-        payload(Some("Test Person En"), Some("Seksjon En"), true),
-    )
-    .await;
-    publiser(
-        &context,
-        "ansatte.M10000.99990002",
-        payload(Some("Test Person To"), Some("Seksjon To"), true),
-    )
-    .await;
-
-    assert_eq!(
-        ansatte.enhet_navn("M10000").await.unwrap(),
-        Some("Seksjon To".to_string())
-    );
-}
-
-#[tokio::test]
 async fn deaktivert_ansatt_kan_slaas_opp() {
     let Some(server) = NatsServer::start() else {
         eprintln!("skipping: nats-server is not installed");
@@ -367,4 +341,144 @@ async fn ugyldig_payload_gir_feil() {
 
     let result: Result<Option<String>> = ansatte.ansatt_navn("99990001").await;
     assert!(matches!(result, Err(Error::Payload(_))));
+}
+
+async fn publiser_flyttemarkor(context: &Context, subject: &str) {
+    let mut headers = async_nats::HeaderMap::new();
+    headers.insert("deleted", "true");
+    context
+        .publish_with_headers(subject.to_string(), headers, "".into())
+        .await
+        .expect("publish")
+        .await
+        .expect("publish ack");
+}
+
+#[tokio::test]
+async fn henter_hele_ansattposten() {
+    let Some(server) = NatsServer::start() else {
+        eprintln!("skipping: nats-server is not installed");
+        return;
+    };
+    let (ansatte, context) = jetstream(&server).await;
+    publiser(
+        &context,
+        "ansatte.M42210.99990001",
+        serde_json::json!({
+            "accountEnabled": true,
+            "displayName": "Test Person En",
+            "department": "seksjon en",
+            "employeeId": "99990001",
+            "onPremisesExtensionAttributes": { "extensionAttribute6": "M42210" },
+        }),
+    )
+    .await;
+
+    let ansatt = ansatte.ansatt("99990001").await.unwrap().unwrap();
+    assert_eq!(ansatt.account_enabled, Some(true));
+    assert_eq!(ansatt.display_name.as_deref(), Some("Test Person En"));
+    assert_eq!(ansatt.department.as_deref(), Some("seksjon en"));
+    assert_eq!(
+        ansatt
+            .on_premises_extension_attributes
+            .and_then(|attributter| attributter.extension_attribute6)
+            .as_deref(),
+        Some("M42210")
+    );
+    assert_eq!(ansatte.ansatt("99990099").await.unwrap(), None);
+}
+
+#[tokio::test]
+async fn ansatt_folger_flytting_til_ny_enhet() {
+    let Some(server) = NatsServer::start() else {
+        eprintln!("skipping: nats-server is not installed");
+        return;
+    };
+    let (ansatte, context) = jetstream(&server).await;
+    publiser(
+        &context,
+        "ansatte.M10000.99990001",
+        payload(Some("Test Person En"), Some("Seksjon En"), true),
+    )
+    .await;
+    publiser_flyttemarkor(&context, "ansatte.M10000.99990001").await;
+    publiser(
+        &context,
+        "ansatte.M20000.99990001",
+        payload(Some("Test Person En"), Some("Seksjon To"), true),
+    )
+    .await;
+
+    let ansatt = ansatte.ansatt("99990001").await.unwrap().unwrap();
+    assert_eq!(ansatt.department.as_deref(), Some("Seksjon To"));
+}
+
+#[tokio::test]
+async fn flyttemarkor_som_nyeste_ansattpost_gir_feil() {
+    let Some(server) = NatsServer::start() else {
+        eprintln!("skipping: nats-server is not installed");
+        return;
+    };
+    let (ansatte, context) = jetstream(&server).await;
+    publiser(
+        &context,
+        "ansatte.M10000.99990001",
+        payload(Some("Test Person En"), Some("Seksjon En"), true),
+    )
+    .await;
+    publiser_flyttemarkor(&context, "ansatte.M10000.99990001").await;
+
+    assert!(ansatte.ansatt("99990001").await.is_err());
+    assert!(ansatte.ansatt_navn("99990001").await.is_err());
+}
+
+#[tokio::test]
+async fn enhetsnavn_finnes_selv_om_noen_har_flyttet_ut() {
+    let Some(server) = NatsServer::start() else {
+        eprintln!("skipping: nats-server is not installed");
+        return;
+    };
+    let (ansatte, context) = jetstream(&server).await;
+    publiser(
+        &context,
+        "ansatte.M10000.99990001",
+        payload(Some("Test Person En"), Some("Seksjon En"), true),
+    )
+    .await;
+    publiser(
+        &context,
+        "ansatte.M10000.99990002",
+        payload(Some("Test Person To"), Some("Seksjon En"), true),
+    )
+    .await;
+    publiser_flyttemarkor(&context, "ansatte.M10000.99990002").await;
+    publiser(
+        &context,
+        "ansatte.M20000.99990002",
+        payload(Some("Test Person To"), Some("Seksjon To"), true),
+    )
+    .await;
+
+    assert_eq!(
+        ansatte.enhet_navn("M10000").await.unwrap(),
+        Some("Seksjon En".to_string())
+    );
+}
+
+#[tokio::test]
+async fn enhet_der_alle_har_flyttet_ut_gir_none() {
+    let Some(server) = NatsServer::start() else {
+        eprintln!("skipping: nats-server is not installed");
+        return;
+    };
+    let (ansatte, context) = jetstream(&server).await;
+    publiser(
+        &context,
+        "ansatte.M10000.99990001",
+        payload(Some("Test Person En"), Some("Seksjon En"), true),
+    )
+    .await;
+    publiser_flyttemarkor(&context, "ansatte.M10000.99990001").await;
+
+    assert_eq!(ansatte.enhet_navn("M10000").await.unwrap(), None);
 }
