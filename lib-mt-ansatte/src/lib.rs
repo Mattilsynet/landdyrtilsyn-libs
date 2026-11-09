@@ -1,15 +1,20 @@
 pub use error::{Error, Result};
+pub use koststed::avdelingskode;
+
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 use async_nats::jetstream::Context;
 use async_nats::jetstream::message::StreamMessage;
 use async_nats::jetstream::stream::{LastRawMessageErrorKind, Stream};
-use futures_util::TryStreamExt;
+use futures_util::{StreamExt, TryStreamExt};
 use serde::Deserialize;
 
 mod error;
+mod koststed;
 
 const STREAM: &str = "ansatte";
 const SUBJECT_PREFIX: &str = "ansatte";
+const SAMTIDIGE_OPPSLAG: usize = 32;
 
 #[derive(Clone)]
 pub struct MtAnsatte {
@@ -41,6 +46,34 @@ pub struct ExtensionAttributes {
     pub extension_attribute6: Option<String>,
     /// Lederens ansattnummer.
     pub extension_attribute8: Option<String>,
+}
+
+impl Ansatt {
+    pub fn er_aktiv(&self) -> bool {
+        self.account_enabled == Some(true)
+    }
+
+    /// Lederens ansattnummer.
+    pub fn leder(&self) -> Option<&str> {
+        self.on_premises_extension_attributes
+            .as_ref()
+            .and_then(|attributter| attributter.extension_attribute8.as_deref())
+            .filter(|leder| !leder.is_empty())
+    }
+
+    pub fn koststed(&self) -> Option<&str> {
+        self.on_premises_extension_attributes
+            .as_ref()
+            .and_then(|attributter| attributter.extension_attribute6.as_deref())
+            .filter(|koststed| !koststed.is_empty())
+    }
+}
+
+/// Et koststed med navnet ansatte på det har som `department`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Enhet {
+    pub kode: String,
+    pub navn: String,
 }
 
 impl MtAnsatte {
@@ -86,6 +119,118 @@ impl MtAnsatte {
             }
         }
         Ok(None)
+    }
+
+    /// Aktive ansatte, med nyeste post per ansatt, sortert på ansattnummer.
+    pub async fn alle_ansatte(&self) -> Result<Vec<Ansatt>> {
+        let stream = self.jetstream.get_stream(STREAM).await?;
+        let subjects: Vec<String> = stream
+            .info_with_subjects(format!("{SUBJECT_PREFIX}.>"))
+            .await?
+            .map_ok(|(subject, _)| subject)
+            .try_collect()
+            .await?;
+        let meldinger: Vec<Option<StreamMessage>> = futures_util::stream::iter(subjects)
+            .map(|subject| {
+                let stream = &stream;
+                async move { siste_melding(stream, &subject).await }
+            })
+            .buffer_unordered(SAMTIDIGE_OPPSLAG)
+            .try_collect()
+            .await?;
+
+        let mut nyeste: HashMap<String, StreamMessage> = HashMap::new();
+        for melding in meldinger.into_iter().flatten() {
+            let Some(ansattnummer) = melding.subject.rsplit('.').next().map(str::to_string) else {
+                continue;
+            };
+            let er_nyere = nyeste
+                .get(&ansattnummer)
+                .is_none_or(|gjeldende| melding.sequence > gjeldende.sequence);
+            if er_nyere {
+                nyeste.insert(ansattnummer, melding);
+            }
+        }
+
+        let mut ansatte = BTreeMap::new();
+        for (ansattnummer, melding) in nyeste {
+            if melding.payload.is_empty() {
+                continue;
+            }
+            let ansatt: Ansatt = serde_json::from_slice(&melding.payload)?;
+            if ansatt.er_aktiv() {
+                ansatte.insert(ansattnummer, ansatt);
+            }
+        }
+        Ok(ansatte.into_values().collect())
+    }
+
+    /// Aktive ansatte som står på koststedet.
+    pub async fn ansatte_paa_koststed(&self, koststed: &str) -> Result<Vec<Ansatt>> {
+        Ok(self
+            .alle_ansatte()
+            .await?
+            .into_iter()
+            .filter(|ansatt| ansatt.koststed() == Some(koststed))
+            .collect())
+    }
+
+    /// Aktive ansatte på avdelingen og seksjonene under den.
+    pub async fn ansatte_i_avdeling(&self, avdeling: &str) -> Result<Vec<Ansatt>> {
+        Ok(self
+            .alle_ansatte()
+            .await?
+            .into_iter()
+            .filter(|ansatt| ansatt.koststed().and_then(avdelingskode).as_deref() == Some(avdeling))
+            .collect())
+    }
+
+    /// Aktive ansatte på koststedet som er leder (`extensionAttribute8`) for
+    /// en annen aktiv ansatt på koststedet, eller, for en avdeling, på en
+    /// seksjon under den. Entydig leder gir ett treff.
+    pub async fn ledere_for_koststed(&self, koststed: &str) -> Result<Vec<Ansatt>> {
+        let ansatte = self.alle_ansatte().await?;
+        let er_avdeling = avdelingskode(koststed).as_deref() == Some(koststed);
+        let hoerer_til = |ansatt: &Ansatt| match ansatt.koststed() {
+            Some(kode) if kode == koststed => true,
+            Some(kode) => er_avdeling && avdelingskode(kode).as_deref() == Some(koststed),
+            None => false,
+        };
+        let ledere: HashSet<&str> = ansatte
+            .iter()
+            .filter(|ansatt| hoerer_til(ansatt))
+            .filter_map(|ansatt| {
+                let leder = ansatt.leder()?;
+                (Some(leder) != ansatt.employee_id.as_deref()).then_some(leder)
+            })
+            .collect();
+        Ok(ansatte
+            .iter()
+            .filter(|ansatt| ansatt.koststed() == Some(koststed))
+            .filter(|ansatt| {
+                ansatt
+                    .employee_id
+                    .as_deref()
+                    .is_some_and(|nr| ledere.contains(nr))
+            })
+            .cloned()
+            .collect())
+    }
+
+    /// Koststeder med aktive ansatte, sortert på kode.
+    pub async fn enheter(&self) -> Result<Vec<Enhet>> {
+        let mut enheter = BTreeMap::new();
+        for ansatt in self.alle_ansatte().await? {
+            if let (Some(kode), Some(navn)) =
+                (ansatt.koststed(), ikke_tom(ansatt.department.clone()))
+            {
+                enheter.entry(kode.to_string()).or_insert(navn);
+            }
+        }
+        Ok(enheter
+            .into_iter()
+            .map(|(kode, navn)| Enhet { kode, navn })
+            .collect())
     }
 }
 

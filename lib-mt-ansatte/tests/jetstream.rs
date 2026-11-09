@@ -482,3 +482,168 @@ async fn enhet_der_alle_har_flyttet_ut_gir_none() {
 
     assert_eq!(ansatte.enhet_navn("M10000").await.unwrap(), None);
 }
+
+fn post(nr: &str, koststed: &str, enhet: &str, enabled: bool) -> serde_json::Value {
+    serde_json::json!({
+        "accountEnabled": enabled,
+        "displayName": format!("Test Person {nr}"),
+        "employeeId": nr,
+        "department": enhet,
+        "onPremisesExtensionAttributes": { "extensionAttribute6": koststed },
+    })
+}
+
+async fn organisasjon(context: &Context) {
+    publiser(
+        context,
+        "ansatte.M42200.99990001",
+        post("99990001", "M42200", "avdeling landdyr", true),
+    )
+    .await;
+    publiser(
+        context,
+        "ansatte.M42210.99990002",
+        post("99990002", "M42210", "seksjon nord", true),
+    )
+    .await;
+    publiser(
+        context,
+        "ansatte.M42210.99990003",
+        post("99990003", "M42210", "seksjon nord", true),
+    )
+    .await;
+    publiser_flyttemarkor(context, "ansatte.M42210.99990003").await;
+    publiser(
+        context,
+        "ansatte.M42300.99990003",
+        post("99990003", "M42300", "avdeling slakteri", true),
+    )
+    .await;
+    publiser(
+        context,
+        "ansatte.M42220.99990004",
+        post("99990004", "M42220", "seksjon midt", false),
+    )
+    .await;
+}
+
+fn ansattnumre(ansatte: &[lib_mt_ansatte::Ansatt]) -> Vec<&str> {
+    ansatte
+        .iter()
+        .filter_map(|ansatt| ansatt.employee_id.as_deref())
+        .collect()
+}
+
+#[tokio::test]
+async fn alle_ansatte_gir_nyeste_aktive_post_per_ansatt() {
+    let Some(server) = NatsServer::start() else {
+        eprintln!("skipping: nats-server is not installed");
+        return;
+    };
+    let (ansatte, context) = jetstream(&server).await;
+    organisasjon(&context).await;
+
+    let alle = ansatte.alle_ansatte().await.unwrap();
+
+    assert_eq!(ansattnumre(&alle), ["99990001", "99990002", "99990003"]);
+    assert_eq!(alle[2].koststed(), Some("M42300"));
+}
+
+#[tokio::test]
+async fn ansatte_paa_koststed_og_i_avdeling() {
+    let Some(server) = NatsServer::start() else {
+        eprintln!("skipping: nats-server is not installed");
+        return;
+    };
+    let (ansatte, context) = jetstream(&server).await;
+    organisasjon(&context).await;
+
+    assert_eq!(
+        ansattnumre(&ansatte.ansatte_paa_koststed("M42210").await.unwrap()),
+        ["99990002"]
+    );
+    assert_eq!(
+        ansattnumre(&ansatte.ansatte_i_avdeling("M42200").await.unwrap()),
+        ["99990001", "99990002"]
+    );
+}
+
+#[tokio::test]
+async fn enheter_med_aktive_ansatte() {
+    let Some(server) = NatsServer::start() else {
+        eprintln!("skipping: nats-server is not installed");
+        return;
+    };
+    let (ansatte, context) = jetstream(&server).await;
+    organisasjon(&context).await;
+
+    let enheter: Vec<(String, String)> = ansatte
+        .enheter()
+        .await
+        .unwrap()
+        .into_iter()
+        .map(|enhet| (enhet.kode, enhet.navn))
+        .collect();
+
+    assert_eq!(
+        enheter,
+        [
+            ("M42200".to_string(), "avdeling landdyr".to_string()),
+            ("M42210".to_string(), "seksjon nord".to_string()),
+            ("M42300".to_string(), "avdeling slakteri".to_string()),
+        ]
+    );
+}
+
+fn post_med_leder(nr: &str, koststed: &str, leder: &str) -> serde_json::Value {
+    serde_json::json!({
+        "accountEnabled": true,
+        "displayName": format!("Test Person {nr}"),
+        "employeeId": nr,
+        "department": koststed,
+        "onPremisesExtensionAttributes": {
+            "extensionAttribute6": koststed,
+            "extensionAttribute8": leder,
+        },
+    })
+}
+
+#[tokio::test]
+async fn leder_for_seksjon_og_avdeling() {
+    let Some(server) = NatsServer::start() else {
+        eprintln!("skipping: nats-server is not installed");
+        return;
+    };
+    let (ansatte, context) = jetstream(&server).await;
+    for (nr, koststed, leder) in [
+        ("99990001", "M42000", "99990000"),
+        ("99990002", "M42200", "99990001"),
+        ("99990003", "M42200", "99990001"),
+        ("99990004", "M42210", "99990002"),
+        ("99990005", "M42210", "99990004"),
+        ("99990006", "M42210", "99990004"),
+    ] {
+        publiser(
+            &context,
+            &format!("ansatte.{koststed}.{nr}"),
+            post_med_leder(nr, koststed, leder),
+        )
+        .await;
+    }
+
+    assert_eq!(
+        ansattnumre(&ansatte.ledere_for_koststed("M42210").await.unwrap()),
+        ["99990004"]
+    );
+    assert_eq!(
+        ansattnumre(&ansatte.ledere_for_koststed("M42200").await.unwrap()),
+        ["99990002"]
+    );
+    assert!(
+        ansatte
+            .ledere_for_koststed("M42220")
+            .await
+            .unwrap()
+            .is_empty()
+    );
+}

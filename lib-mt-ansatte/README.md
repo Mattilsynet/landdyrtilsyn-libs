@@ -14,6 +14,12 @@ let ansatte = lib_mt_ansatte::MtAnsatte::new(nats_client.clone());
 let ansatt = ansatte.ansatt("99990001").await?;
 let navn = ansatte.ansatt_navn("99990001").await?;
 let enhet = ansatte.enhet_navn("M12345").await?;
+let alle = ansatte.alle_ansatte().await?;
+let seksjon = ansatte.ansatte_paa_koststed("M42210").await?;
+let avdeling = ansatte.ansatte_i_avdeling("M42200").await?;
+let enheter = ansatte.enheter().await?;
+let ledere = ansatte.ledere_for_koststed("M42210").await?;
+let avdelingskode = lib_mt_ansatte::avdelingskode("M42210"); // Some("M42200")
 ```
 
 - `ansatt` søker på `ansatte.*.<employee-id>` og returnerer hele Entra-brukeren
@@ -21,6 +27,16 @@ let enhet = ansatte.enhet_navn("M12345").await?;
 - `ansatt_navn` er `displayName` fra `ansatt`.
 - `enhet_navn` går gjennom subjectene på `ansatte.<department-id>.*` og
   returnerer `department` fra første ansatt som har det.
+- `alle_ansatte` gir aktive ansatte med nyeste post per ansatt.
+  `ansatte_paa_koststed`, `ansatte_i_avdeling` og `enheter` (koststed med
+  `department` som navn) bygger på den. Listene leser siste melding på hvert
+  subject i strømmen, og tar derfor litt tid.
+- `ledere_for_koststed` gir de aktive ansatte på koststedet som andre aktive
+  ansatte på koststedet, eller for en avdeling på seksjonene under, har som
+  leder (`extensionAttribute8`). Entydig leder gir ett treff.
+- `avdelingskode` leser avdelingen ut av koststedskoden: i tilsynsdivisjonene
+  (M4) fire første tegn + `00` (M42210 → M42200), på hovedkontoret (M3) tre
+  første + `000` (M34600 → M34000).
 
 Hvert kall gjør oppslag mot JetStream. Tilkobling, credentials og
 NATS-rettigheter til `ansatte` må applikasjonen håndtere.
