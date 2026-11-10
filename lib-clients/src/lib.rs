@@ -7,6 +7,7 @@ pub mod document_generator;
 pub mod ejb;
 pub mod error;
 pub mod geonorge;
+pub mod hrng;
 pub mod kodeverk;
 pub mod orgenhet;
 pub mod tilsynskvittering;
@@ -56,3 +57,6 @@ pub use geonorge::{
     geonorge_client::GeoNorgeClient, response::AddressResult, response::GeonorgeResponse,
     response::Koordinater,
 };
+
+#[cfg(feature = "hrng")]
+pub use hrng::{error::HrngError, error::HrngResult, hrng_client::HrngClient};

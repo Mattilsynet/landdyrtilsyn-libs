@@ -60,7 +60,7 @@ impl AuthConfig {
             .await
     }
 
-    async fn fetch_token(&self, scopes: &[&str]) -> Result<ApplicationAccessToken> {
+    pub async fn fetch_token(&self, scopes: &[&str]) -> Result<ApplicationAccessToken> {
         let scope = scopes.join(" ");
         let form = [
             ("client_id", self.client_id.expose_secret()),
