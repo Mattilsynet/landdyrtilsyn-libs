@@ -40,11 +40,7 @@ impl Personnummer {
         // k2-sjekk: alle 11 sifre
         let weights2 = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2, 1];
         let sum2: u32 = weights2.iter().zip(d.iter()).map(|(w, d)| w * d).sum();
-        if !sum2.is_multiple_of(11) {
-            return false;
-        }
-
-        true
+        sum2.is_multiple_of(11)
     }
 }
 

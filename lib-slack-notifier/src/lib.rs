@@ -29,8 +29,8 @@
 //! # Ok(())
 //! # }
 //!
-//! async fn do_work() -> Result<(), anyhow::Error> {
-//!     Err(anyhow::anyhow!("Database connection failed"))
+//! async fn do_work() -> Result<(), Box<dyn std::error::Error>> {
+//!     Err("Database connection failed".into())
 //! }
 //! ```
 //!

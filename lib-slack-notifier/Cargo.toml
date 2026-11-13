@@ -9,4 +9,3 @@ path = "src/lib.rs"
 [dependencies]
 reqwest = { workspace = true }
 serde = { workspace = true }
-anyhow = { workspace = true }

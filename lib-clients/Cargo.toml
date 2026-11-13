@@ -17,7 +17,6 @@ tokio = { workspace = true, features = ["sync"] }
 chrono = { workspace = true, features = ["serde"] }
 uuid = { workspace = true, features = ["v4"] }
 
-bon = {version = "3.10.3",optional = true}
 serde_path_to_error = "0.1.20"
 urlencoding = "2.1.3"
 lib-auth = { path = "../lib-auth" }
@@ -26,15 +25,15 @@ lib-auth = { path = "../lib-auth" }
 tokio = { workspace = true }
 
 [features]
-orgenhet = ["dep:bon"]
-bilde = ["dep:bon"]
-arkiv = ["dep:bon"]
-kodeverk = ["dep:bon"]
-dokument_generator = ["dep:bon"]
-virksomhet = ["dep:bon"]
-tilsynskvittering = ["dep:bon"]
-ejb = ["dep:bon"]
-geonorge = ["dep:bon"]
+orgenhet = []
+bilde = []
+arkiv = []
+kodeverk = []
+dokument_generator = []
+virksomhet = []
+tilsynskvittering = []
+ejb = []
+geonorge = []
 hrng = []
 default = []
 
