@@ -81,8 +81,8 @@ impl Saksaar {
 }
 
 /**
-* SaksTittel benyttes på opprettelse av sak i arkiv
-*/
+ * SaksTittel benyttes på opprettelse av sak i arkiv
+ */
 const SAKSTITTEL_MAX_LENGTH: usize = 256;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -12,8 +12,8 @@ use core::fmt;
 use serde::{Deserialize, Deserializer, Serialize};
 
 /**
-* Arkivsak benyttes på getSak og post sak i arkiv
-*/
+ * Arkivsak benyttes på getSak og post sak i arkiv
+ */
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ArkivClientSak {
@@ -102,8 +102,8 @@ impl From<Tilgangskode> for Kodeverk {
 }
 
 /**
-* Arkivsak benyttes på getSak og post sak i arkiv
-*/
+ * Arkivsak benyttes på getSak og post sak i arkiv
+ */
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ArkivSak {
