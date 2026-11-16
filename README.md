@@ -29,6 +29,25 @@ Dette er en alias til:
 cargo check --workspace --all-targets --all-features
 ```
 
+## Før commit og push
+
+Repoet installerer ikke git-hooks. Kjør kontrollene eksplisitt:
+
+```bash
+gitleaks git --staged --redact                              # før commit
+gitleaks git --redact --log-opts="HEAD --not --remotes"      # før push
+cargo fmt --all -- --check
+cargo check --workspace --all-targets --all-features
+cargo clippy --workspace --all-targets --all-features -- -D warnings
+cargo test --workspace --all-features
+cargo deny check advisories sources
+cargo audit
+```
+
+Endringer som berører sikkerhetsrelevante flater gjennomgås også med uavhengig
+security review via OpenCode. `deny.toml` og `.cargo/audit.toml` er fortsatt
+aktive sikkerhetspolicyer.
+
 ## Hendvendelser
 
 Spørsmål knyttet til koden eller prosjektet kan stilles som issues her på GitHub

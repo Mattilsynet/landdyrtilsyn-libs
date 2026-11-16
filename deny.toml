@@ -1,4 +1,4 @@
-# cargo-deny configuration for the commit-review hard gates.
+# cargo-deny policy for local verification and release checks.
 #
 # Only ABSOLUTES belong in this file. Everything requiring judgement -- a new
 # build script, a proc-macro, a dependency whose purpose is unclear -- is left
@@ -35,10 +35,8 @@ allow-git = []
 # [bans] is intentionally NOT part of the hard-gate path.
 #
 # cargo-deny can enumerate build scripts and proc-macros via [bans.build], and
-# that enumeration is useful -- but as an observation, not a verdict. The hook
-# detects the same thing in signals.sh and hands it to the reviewers, who can
-# tell "this crate added bindgen for a legitimate FFI binding" from "a patch
-# release just acquired an HTTP client".
+# that enumeration is useful -- but as an observation, not a verdict. Reviewers
+# can distinguish legitimate build requirements from unexpected capabilities.
 #
 # Run `cargo deny check bans` manually when you want the inventory.
 # ---------------------------------------------------------------------------
