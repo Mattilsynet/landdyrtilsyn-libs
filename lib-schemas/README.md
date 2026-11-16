@@ -19,6 +19,23 @@ som integrerer med Skuffen og relaterte systemer.
 - `typer`: Common identifier/value types med valideringshelpers.
 - `error`: Delte error types brukt ved parsing og validering.
 
+## Skuffen: tildeling ved opprettelse av sak
+
+`OpprettSak.saksbehandler_id` og `saksbehandler_enhet` er valgfrie. Minst ett
+felt må være satt; begge kan være satt. Utelatt felt og `null` deserialiseres
+som `None`, og `None` utelates ved serialisering. Libs gjør ingen
+tildelingsvalidering. Skuffen kontrollerer ved mottak at minst ett felt er satt
+og at oppgitte verdier ikke er tomme eller blanke, og forklarer eventuelle feil
+i kvitteringen. Uten eksplisitt enhet fyller arkivet den ut fra saksbehandleren.
+
+Endringen leveres som en minor-release. JSON fra eksisterende klienter med
+begge felt som strenger støttes uendret; klienter kan beholde gammel tag.
+Rust-klienter som tar inn den nye taggen må bruke `Some(...)`/`None` for de to
+feltene. Journalposter og `SettSaksansvarlig` er ikke endret.
+
+Hele Skuffen-pipelinen må være oppgradert før klienter begynner å utelate et
+felt. Gamle Skuffen-instanser kan ikke lese den nye meldingsformen.
+
 ## Usage
 
 Enable `skuffen` when importing the crate if you need Skuffen domain types:
