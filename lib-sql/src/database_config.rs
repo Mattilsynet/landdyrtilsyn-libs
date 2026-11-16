@@ -5,8 +5,8 @@
 
 use secrecy::ExposeSecret;
 use secrecy::SecretString;
-use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
-use sqlx::{Pool, Postgres};
+use sqlx_core::{error::Error, pool::Pool};
+use sqlx_postgres::{PgConnectOptions, PgPoolOptions, Postgres};
 use std::env;
 
 /// Typealias for prosjektets database-pool.
@@ -62,12 +62,12 @@ impl DatabaseSettings {
 /// variablene.
 ///
 /// # Errors
-/// Returnerer `sqlx::Error` dersom opprettelse av pool feiler, for eksempel ved
+/// Returnerer `sqlx_core::error::Error` dersom opprettelse av pool feiler, for eksempel ved
 /// ugyldig tilkoblingsstreng, nettverksfeil eller avvist tilkobling fra databasen.
 ///
 /// # Examples
 /// ```rust
-/// # async fn example() -> Result<(), sqlx::Error> {
+/// # async fn example() -> Result<(), sqlx_core::error::Error> {
 /// use lib_sql::database_config::get_database_pool;
 ///
 /// let pool = get_database_pool().await?;
@@ -75,7 +75,7 @@ impl DatabaseSettings {
 /// # Ok(())
 /// # }
 /// ```
-pub async fn get_database_pool() -> Result<DbPool, sqlx::Error> {
+pub async fn get_database_pool() -> Result<DbPool, Error> {
     let env = env::var("APP_APPLICATION__ENVIRONMENT").unwrap_or_else(|_| "local".into());
     let username = env::var("DATABASE_USER").expect("DATABASE_USER must be set");
     let password = env::var("DATABASE_PASSWORD").expect("DATABASE_PASSWORD must be set");
