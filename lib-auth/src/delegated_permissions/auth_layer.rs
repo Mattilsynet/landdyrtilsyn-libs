@@ -80,6 +80,19 @@ impl TokenValidator {
         Self::new(AuthConfig::from_env()?).await
     }
 
+    /// Validates an Entra access token and returns the user it identifies.
+    ///
+    /// Checks the RS256 signature against the tenant's JWKS, the audience
+    /// (client id), the issuer (tenant) and `exp`. A token signed with an
+    /// unknown `kid` triggers a refetch of the JWKS before it is rejected.
+    pub async fn validate(&self, token: &SecretString) -> Result<UserData> {
+        let claims = self.verify_token(token).await?.claims;
+        Ok(UserData {
+            navn: claims.name,
+            epost: claims.preferred_username,
+        })
+    }
+
     async fn verify_token(&self, token: &SecretString) -> Result<TokenData<Claims>> {
         let header = decode_header(token.expose_secret()).map_err(|e| {
             tracing::error!("Failed to decode JWT header: {:?}", e);
@@ -187,13 +200,8 @@ where
                 _ => return Ok(StatusCode::UNAUTHORIZED.into_response()),
             };
 
-            match validator.verify_token(&token).await {
-                Ok(token_data) => {
-                    let user_data = UserData {
-                        navn: token_data.claims.name,
-                        epost: token_data.claims.preferred_username,
-                    };
-
+            match validator.validate(&token).await {
+                Ok(user_data) => {
                     req.extensions_mut().insert(user_data);
                 }
                 Err(e) => {
