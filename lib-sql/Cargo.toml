@@ -7,14 +7,14 @@ edition = "2024"
 
 [dependencies]
 secrecy = { workspace = true }
-sqlx-core = { version = "0.9.0", default-features = false, features = [
+sqlx-core = { version = "0.9.1", default-features = false, features = [
     "_rt-tokio",
     "_tls-rustls-ring-webpki",
     "migrate",
     "uuid",
     "chrono",
 ] }
-sqlx-postgres = { version = "0.9.0", default-features = false, features = [
+sqlx-postgres = { version = "0.9.1", default-features = false, features = [
     "migrate",
     "uuid",
     "chrono",
