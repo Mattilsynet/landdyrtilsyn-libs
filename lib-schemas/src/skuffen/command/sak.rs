@@ -28,8 +28,6 @@ pub struct OpprettSak {
 #[serde(deny_unknown_fields)]
 pub struct AvsluttSak {
     pub sak_key: crate::skuffen::query::queries::SakKey,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub kildesystem: Option<String>,
 }
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
@@ -44,6 +42,4 @@ pub struct SettSaksansvarlig {
     pub sak_key: crate::skuffen::query::queries::SakKey,
     pub saksbehandler_id: String,
     pub saksbehandler_enhet: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub kildesystem: Option<String>,
 }
